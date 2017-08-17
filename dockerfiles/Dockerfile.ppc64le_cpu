@@ -1,14 +1,12 @@
 FROM ppc64le/ubuntu:16.04
 MAINTAINER Abdul Dakkak <dakkak@illinois.edu>
 
-ENV MXNET_VERSION 0.10.0.post2
-
-
 # # Build-time metadata as defined at http://label-schema.org
 ARG BUILD_DATE
 ARG VCS_REF
 ARG VERSION
 ARG ARCH
+ARG FRAMEWORK_VERSION
 # LABEL org.carml.go-mxnet.build-date=$BUILD_DATE \
 #       org.carml.go-mxnet.name="go-mxnet bindings for go" \
 #       org.carml.go-mxnet.description="" \
@@ -18,7 +16,7 @@ ARG ARCH
 #       org.carml.go-mxnet.vendor="CarML" \
 #       org.carml.go-mxnet.arch=$ARCH \
 #       org.carml.go-mxnet.version=$VERSION \
-#       org.carml.go-mxnet.framework_version=$MXNET_VERSION \
+#       org.carml.go-mxnet.framework_version=$FRAMEWORK_VERSION \
 #       org.carml.go-mxnet.schema-version="1.0"
 
 
@@ -58,7 +56,7 @@ RUN cd /usr/src/gtest && \
     cp *.a /usr/lib
 
 WORKDIR /
-RUN git clone --single-branch --depth 1 --branch 0.10.0.post2 --recursive https://github.com/apache/incubator-mxnet mxnet 
+RUN git clone --single-branch --depth 1 --branch $FRAMEWORK_VERSION --recursive https://github.com/apache/incubator-mxnet mxnet 
 
 RUN cd mxnet && \
     cp make/config.mk . && \

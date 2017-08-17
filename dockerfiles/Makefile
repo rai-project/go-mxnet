@@ -59,7 +59,8 @@ BUILD_ARGS = --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
 			 --build-arg VERSION=$(CODE_VERSION) \
 			 --build-arg VCS_URL=`git config --get remote.origin.url` \
 		     --build-arg VCS_REF=$(GIT_COMMIT) \
-		     --build-arg ARCH=$(ARCH)
+		     --build-arg ARCH=$(ARCH) \
+			 --build-arg MXNET_VERSION="0.10.0.post2"
 
 docker_build_gpu: # Build GPU Docker image
 	@docker build $(BUILD_ARGS) \
