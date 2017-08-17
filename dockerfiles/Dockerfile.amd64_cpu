@@ -55,7 +55,7 @@ RUN cd /usr/src/gtest && \
     cp *.a /usr/lib
 
 WORKDIR /
-RUN git clone  --single-branch --depth 1 --recursive https://github.com/apache/incubator-mxnet mxnet 
+RUN git clone  --single-branch --depth 1 --branch 0.10.0.post2 --recursive https://github.com/apache/incubator-mxnet mxnet 
 
 RUN cd mxnet && \
     cp make/config.mk . && \
