@@ -65,7 +65,7 @@ RUN cd mxnet && \
     echo "USE_OPENCV=0" >>config.mk && \
     echo "ADD_CFLAGS=-I/usr/include/openblas -Wno-sign-compare -ftrack-macro-expansion=0 -Wno-misleading-indentation" >>config.mk
 
-#     make -j$(nproc) && \
+#     make && \
 #     rm -r build
 
 # RUN ln -s /mxnet/lib/libmxnet.so /usr/lib/libmxnet.so

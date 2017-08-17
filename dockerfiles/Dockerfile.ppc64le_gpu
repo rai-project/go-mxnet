@@ -66,7 +66,7 @@ RUN cd mxnet && \
     echo "USE_CUDA=1" >>config.mk && \
     echo "USE_CUDA_PATH=/usr/local/cuda" >>config.mk && \
     echo "USE_CUDNN=1" >>config.mk && \
-    make -j$(nproc) ADD_LDFLAGS=-L/usr/local/cuda/lib64/stubs && \
+    make ADD_LDFLAGS=-L/usr/local/cuda/lib64/stubs && \
     rm -r build
 
 RUN ln -s /mxnet/lib/libmxnet.so /usr/lib/libmxnet.so
