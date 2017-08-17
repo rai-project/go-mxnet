@@ -2,10 +2,10 @@ FROM ppc64le/ubuntu:16.04
 MAINTAINER Abdul Dakkak <dakkak@illinois.edu>
 
 # # Build-time metadata as defined at http://label-schema.org
-# ARG BUILD_DATE
-# ARG VCS_REF
-# ARG VERSION
-# ARG ARCH
+ARG BUILD_DATE
+ARG VCS_REF
+ARG VERSION
+ARG ARCH
 # LABEL org.carml.go-mxnet.build-date=$BUILD_DATE \
 #       org.carml.go-mxnet.name="go-mxnet bindings for go" \
 #       org.carml.go-mxnet.description="" \
