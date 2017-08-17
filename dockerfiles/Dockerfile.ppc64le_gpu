@@ -54,14 +54,14 @@ RUN cd /usr/src/gtest && \
     cp *.a /usr/lib
 
 WORKDIR /
-RUN git clone  --single-branch --depth 1 --branch 0.10.0.post2 --recursive https://github.com/apache/incubator-mxnet mxnet 
+RUN git clone --single-branch --depth 1 --branch 0.10.0.post2 --recursive https://github.com/apache/incubator-mxnet mxnet 
 
 RUN cd mxnet && \
     cp make/config.mk . && \
     echo "USE_CPP_PACKAGE=1" >>config.mk && \
     echo "USE_BLAS=openblas" >>config.mk && \
     echo "USE_OPENCV=0" >>config.mk && \
-    echo "ADD_CFLAGS=-I/usr/include/openblas -ftrack-macro-expansion=0 -Wno-misleading-indentation" >>config.mk && \
+    echo "ADD_CFLAGS=-I/usr/include/openblas -Wno-sign-compare -ftrack-macro-expansion=0 -Wno-misleading-indentation" >>config.mk && \
     echo "USE_CUDA=1" >>config.mk && \
     echo "USE_CUDA_PATH=/usr/local/cuda" >>config.mk && \
     echo "USE_CUDNN=1" >>config.mk && \
