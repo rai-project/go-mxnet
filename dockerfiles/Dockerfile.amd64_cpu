@@ -26,21 +26,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     software-properties-common && \
     add-apt-repository ppa:ubuntu-toolchain-r/test -y && \
     apt-get update && apt-get install -y --no-install-recommends \ 
-    gcc-6 \
-    g++-6  \
-    build-essential \
-    git \
-    libopenblas-dev \
-    libopenblas-base \
-    libopencv-dev \
-    python-opencv \
-    libcurl4-openssl-dev \
-    libgtest-dev \
-    cmake \
-    wget \
-    unzip \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/* && \
+        gcc-6 \
+        g++-6  \
+        build-essential \
+        git \
+        libopenblas-dev \
+        libopenblas-base \
+        libopencv-dev \
+        python-opencv \
+        libcurl4-openssl-dev \
+        libgtest-dev \
+        cmake \
+        wget \
+        unzip \
+        ca-certificates \
+    && \
+    rm -rf /var/lib/apt/lists/* && \
     update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 60 --slave /usr/bin/g++ g++ /usr/bin/g++-6 && \
     update-alternatives --config gcc && \
     gcc -v 
