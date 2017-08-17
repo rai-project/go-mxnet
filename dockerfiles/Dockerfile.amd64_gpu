@@ -59,7 +59,6 @@ RUN cd mxnet && \
     cp make/config.mk . && \
     echo "USE_CPP_PACKAGE=1" >>config.mk && \
     echo "USE_BLAS=openblas" >>config.mk && \
-    echo "USE_CUDA=0" >>config.mk && \
     echo "USE_OPENCV=0" >>config.mk && \
     echo "ADD_CFLAGS=-I/usr/include/openblas -ftrack-macro-expansion=0 -Wno-misleading-indentation" >>config.mk && \
     echo "USE_CUDA=1" >>config.mk && \
@@ -97,8 +96,8 @@ WORKDIR $GOPATH/src/$PKG
 # Get Go bindings
 
 RUN git clone --depth=1 --branch=master https://${PKG}.git . && \
-    sed -i "/prefix=/c prefix=\/mxnet" $GOPATH/src/github.com/songtianyi/go-mxnet-predictor/travis/mxnet.pc && \
-    cp $GOPATH/src/github.com/songtianyi/go-mxnet-predictor/travis/mxnet.pc /usr/lib/pkgconfig && \
+    sed -i "/prefix=/c prefix=\/mxnet" $GOPATH/src/github.com/rai-project/go-mxnet-predictor/travis/mxnet.pc && \
+    cp $GOPATH/src/github.com/rai-project/go-mxnet-predictor/travis/mxnet.pc /usr/lib/pkgconfig && \
     pkg-config --libs mxnet && \
     glide install && \
     rm -fr vendor/github.com/Sirupsen && \

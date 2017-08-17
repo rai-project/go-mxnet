@@ -18,8 +18,8 @@ import (
 	"fmt"
 	"github.com/anthonynsimon/bild/imgio"
 	"github.com/anthonynsimon/bild/transform"
-	"github.com/songtianyi/go-mxnet-predictor/mxnet"
-	"github.com/songtianyi/go-mxnet-predictor/utils"
+	"github.com/rai-project/go-mxnet-predictor/mxnet"
+	"github.com/rai-project/go-mxnet-predictor/utils"
 	"io/ioutil"
 	"sort"
 )

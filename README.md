@@ -1,7 +1,7 @@
 ## go-mxnet-predictor
 
-[![Build Status](https://travis-ci.org/songtianyi/go-mxnet-predictor.svg?branch=master)](https://travis-ci.org/songtianyi/go-mxnet-predictor)
-[![Go Report Card](https://goreportcard.com/badge/github.com/songtianyi/go-mxnet-predictor)](https://goreportcard.com/report/github.com/songtianyi/go-mxnet-predictor)
+[![Build Status](https://travis-ci.org/rai-project/go-mxnet-predictor.svg?branch=master)](https://travis-ci.org/rai-project/go-mxnet-predictor)
+[![Go Report Card](https://goreportcard.com/badge/github.com/rai-project/go-mxnet-predictor)](https://goreportcard.com/report/github.com/rai-project/go-mxnet-predictor)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 
@@ -9,7 +9,7 @@ go-mxnet-predictor is go binding for mxnet c_predict_api. It's as raw as origina
 
 
 ## Part 1. Steps to build your own linux dev environment
-[Dockerfile](https://github.com/songtianyi/docker-dev-envs/blob/master/gmp.Dockerfile) offered for building mxnet and go env. You could skip this part by using Docker
+[Dockerfile](https://github.com/rai-project/docker-dev-envs/blob/master/gmp.Dockerfile) offered for building mxnet and go env. You could skip this part by using Docker
 
 ##### 1.1 Install mxnet prerequisites and go
 * for mxnet prerequisites check [here](http://mxnet.io/get_started/setup.html#prerequisites)
@@ -26,8 +26,8 @@ go-mxnet-predictor is go binding for mxnet c_predict_api. It's as raw as origina
 ##### 2.1 Get go-mxnet-predictor and do some configuration
 ```shell
 go get github.com/anthonynsimon/bild
-go get -u -v github.com/songtianyi/go-mxnet-predictor
-cd $GOPATH/src/github.com/songtianyi/go-mxnet-predictor	
+go get -u -v github.com/rai-project/go-mxnet-predictor
+cd $GOPATH/src/github.com/rai-project/go-mxnet-predictor	
 sed -i "/prefix=/c prefix=\/root\/MXNet\/mxnet" travis/mxnet.pc
 cp travis/mxnet.pc /usr/lib/pkgconfig/
 pkg-config --libs mxnet

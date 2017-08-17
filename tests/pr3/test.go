@@ -15,7 +15,7 @@
 package main
 
 import (
-	"github.com/songtianyi/go-mxnet-predictor/mxnet"
+	"github.com/rai-project/go-mxnet-predictor/mxnet"
 	"io/ioutil"
 )
 

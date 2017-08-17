@@ -99,8 +99,8 @@ WORKDIR $GOPATH/src/$PKG
 # Get Go bindings
 
 RUN git clone --depth=1 --branch=master https://${PKG}.git . && \
-    sed -i "/prefix=/c prefix=\/mxnet" $GOPATH/src/github.com/songtianyi/go-mxnet-predictor/travis/mxnet.pc && \
-    cp $GOPATH/src/github.com/songtianyi/go-mxnet-predictor/travis/mxnet.pc /usr/lib/pkgconfig && \
+    sed -i "/prefix=/c prefix=\/mxnet" $GOPATH/src/github.com/rai-project/go-mxnet-predictor/travis/mxnet.pc && \
+    cp $GOPATH/src/github.com/rai-project/go-mxnet-predictor/travis/mxnet.pc /usr/lib/pkgconfig && \
     pkg-config --libs mxnet && \
     glide install && \
     rm -fr vendor/github.com/Sirupsen && \

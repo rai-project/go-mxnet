@@ -21,8 +21,8 @@ LABEL org.carml.go-mxnet.build-date=$BUILD_DATE \
 # mxnet install with cpu support
 
 RUN apt-get update && apt-get install -y --no-install-recommends \ 
-        build-essential \
-        software-properties-common && \
+    build-essential \
+    software-properties-common && \
     add-apt-repository ppa:ubuntu-toolchain-r/test -y && \
     apt-get update && apt-get install -y --no-install-recommends \ 
         gcc-6 \
@@ -31,9 +31,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         git \
         libopenblas-dev \
         libopenblas-base \
+        libopencv-dev \
+        python-opencv \
         libcurl4-openssl-dev \
         libgtest-dev \
-        python-dev \
         cmake \
         wget \
         unzip \
@@ -43,7 +44,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 60 --slave /usr/bin/g++ g++ /usr/bin/g++-6 && \
     update-alternatives --config gcc && \
     gcc -v 
-    
+
 
 ########## INSTALLATION STEPS ###################
 
@@ -53,12 +54,14 @@ RUN cd /usr/src/gtest && \
     cp *.a /usr/lib
 
 WORKDIR /
-RUN git clone  --single-branch --depth 1 --recursive https://github.com/apache/incubator-mxnet mxnet && \
-    cd mxnet && \
+RUN git clone  --single-branch --depth 1 --recursive https://github.com/apache/incubator-mxnet mxnet 
+
+RUN cd mxnet && \
     cp make/config.mk . && \
     echo "USE_CPP_PACKAGE=1" >>config.mk && \
     echo "USE_BLAS=openblas" >>config.mk && \
     echo "USE_OPENCV=0" >>config.mk && \
+    echo "ADD_CFLAGS=-I/usr/include/openblas -ftrack-macro-expansion=0 -Wno-misleading-indentation" >>config.mk && \
     echo "USE_CUDA=0" >>config.mk && \
     make -j$(nproc) && \
     rm -r build
@@ -95,8 +98,8 @@ WORKDIR $GOPATH/src/$PKG
 # Get Go bindings
 
 RUN git clone --depth=1 --branch=master https://${PKG}.git . && \
-    sed -i "/prefix=/c prefix=\/mxnet" $GOPATH/src/github.com/songtianyi/go-mxnet-predictor/travis/mxnet.pc && \
-    cp $GOPATH/src/github.com/songtianyi/go-mxnet-predictor/travis/mxnet.pc /usr/lib/pkgconfig && \
+    sed -i "/prefix=/c prefix=\/mxnet" $GOPATH/src/github.com/rai-project/go-mxnet-predictor/travis/mxnet.pc && \
+    cp $GOPATH/src/github.com/rai-project/go-mxnet-predictor/travis/mxnet.pc /usr/lib/pkgconfig && \
     pkg-config --libs mxnet && \
     glide install && \
     rm -fr vendor/github.com/Sirupsen && \
