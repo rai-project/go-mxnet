@@ -1,0 +1,105 @@
+FROM ubuntu:16.04
+MAINTAINER Abdul Dakkak <dakkak@illinois.edu>
+
+
+# mxnet install with cpu support
+
+RUN apt-get update && apt-get install -y --no-install-recommends \ 
+    build-essential \
+    software-properties-common && \
+    add-apt-repository ppa:ubuntu-toolchain-r/test -y && \
+    apt-get update && apt-get install -y --no-install-recommends \ 
+    gcc-6 \
+    g++-6  \
+    build-essential \
+    git \
+    libopenblas-dev \
+    libopenblas-base \
+    libopencv-dev \
+    python-opencv \
+    libcurl4-openssl-dev \
+    libgtest-dev \
+    cmake \
+    wget \
+    unzip \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/* && \
+    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 60 --slave /usr/bin/g++ g++ /usr/bin/g++-6 && \
+    update-alternatives --config gcc && \
+    gcc -v 
+
+
+########## INSTALLATION STEPS ###################
+
+RUN cd /usr/src/gtest && \
+    cmake CMakeLists.txt && \
+    make && \
+    cp *.a /usr/lib
+
+WORKDIR /
+RUN git clone  --single-branch --depth 1 --recursive https://github.com/apache/incubator-mxnet mxnet 
+
+RUN cd mxnet && \
+    cp make/config.mk . && \
+    echo "USE_CPP_PACKAGE=1" >>config.mk && \
+    echo "USE_BLAS=openblas" >>config.mk && \
+    echo "USE_CUDA=0" >>config.mk && \
+    echo "USE_OPENCV=0" >>config.mk && \
+    make -j$(nproc) && \
+    rm -r build
+
+RUN ln -s /mxnet/lib/libmxnet.so /usr/lib/libmxnet.so
+ENV LD_LIBRARY_PATH /usr/local/cuda/lib64:$LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH /mxnet/lib:$LD_LIBRARY_PATH
+
+
+ENV LD_LIBRARY_PATH /mxnet/lib:$LD_LIBRARY_PATH
+
+#Install Go
+ENV GIMME_GO_VERSION "1.8.3"
+ENV GIMME_OS "linux"
+ENV GIMME_ARCH "amd64"
+
+ADD https://raw.githubusercontent.com/travis-ci/gimme/master/gimme /usr/bin/gimme
+RUN chmod +x /usr/bin/gimme
+RUN gimme
+
+ENV GOROOT "/root/.gimme/versions/go${GIMME_GO_VERSION}.${GIMME_OS}.${GIMME_ARCH}"
+ENV PATH ${GOROOT}/bin:${PATH}
+
+ENV GOPATH "/go"
+ENV PATH $GOPATH/bin:$PATH
+
+#Install Glide
+RUN go get github.com/Masterminds/glide
+
+# Get Go bindings
+ENV PKG github.com/rai-project/go-mxnet-predictor
+WORKDIR $GOPATH/src/$PKG
+
+# Get Go bindings
+
+RUN git clone --depth=1 --branch=master https://${PKG}.git . && \
+    sed -i "/prefix=/c prefix=\/mxnet" $GOPATH/src/github.com/songtianyi/go-mxnet-predictor/travis/mxnet.pc && \
+    cp $GOPATH/src/github.com/songtianyi/go-mxnet-predictor/travis/mxnet.pc /usr/lib/pkgconfig && \
+    pkg-config --libs mxnet && \
+    glide install && \
+    rm -fr vendor/github.com/Sirupsen && \
+    find vendor -type f -exec sed -i 's/Sirupsen/sirupsen/g' {} + && \
+    go build -a -installsuffix cgo -ldflags "-s -w -X ${PKG}/Version=${VERSION} -X ${PKG}/GitCommit=${VCS_REF} -X ${PKG}/BuildDate=${BUILD_DATE}"&& \
+    go install && \
+    rm -fr vendor
+
+ # Build-time metadata as defined at http://label-schema.org
+ARG BUILD_DATE
+ARG VCS_REF
+ARG VERSION
+LABEL org.carml.go-mxnet.build-date=$BUILD_DATE \
+      org.carml.go-mxnet.name="go-mxnet bindings for go" \
+      org.carml.go-mxnet.description="" \
+      org.carml.go-mxnet.url="https://www.carml.org/" \
+      org.carml.go-mxnet.vcs-ref=$VCS_REF \
+      org.carml.go-mxnet.vcs-url=$VCS_URL \
+      org.carml.go-mxnet.vendor="CarML" \
+      org.carml.go-mxnet.version=$VERSION \
+      org.carml.go-mxnet.schema-version="1.0"
