@@ -63,54 +63,53 @@ RUN cd mxnet && \
     echo "USE_BLAS=openblas" >>config.mk && \
     echo "USE_CUDA=0" >>config.mk && \
     echo "USE_OPENCV=0" >>config.mk && \
-    echo "ADD_CFLAGS=-I/usr/include/openblas -Wno-sign-compare -ftrack-macro-expansion=0 -Wno-misleading-indentation" >>config.mk
+    echo "ADD_CFLAGS=-I/usr/include/openblas -Wno-sign-compare -ftrack-macro-expansion=0 -Wno-misleading-indentation" >>config.mk && \
+    make && \
+    rm -r build
 
-#     make && \
-#     rm -r build
-
-# RUN ln -s /mxnet/lib/libmxnet.so /usr/lib/libmxnet.so
-# ENV LD_LIBRARY_PATH /usr/local/cuda/lib64:$LD_LIBRARY_PATH
-# ENV LD_LIBRARY_PATH /mxnet/lib:$LD_LIBRARY_PATH
+RUN ln -s /mxnet/lib/libmxnet.so /usr/lib/libmxnet.so
+ENV LD_LIBRARY_PATH /usr/local/cuda/lib64:$LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH /mxnet/lib:$LD_LIBRARY_PATH
 
 
-# ENV LD_LIBRARY_PATH /mxnet/lib:$LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH /mxnet/lib:$LD_LIBRARY_PATH
 
-# #Install Go
-# ENV GIMME_GO_VERSION "1.8.3"
-# ENV GIMME_OS "linux"
-# ENV GIMME_ARCH $ARCH
+#Install Go
+ENV GIMME_GO_VERSION "1.8.3"
+ENV GIMME_OS "linux"
+ENV GIMME_ARCH $ARCH
 
-# LABEL org.golang.version=$GIMME_GO_VERSION
-# LABEL org.golang.os=$GIMME_OS
-# LABEL org.golang.arch=$GIMME_ARCH
+LABEL org.golang.version=$GIMME_GO_VERSION
+LABEL org.golang.os=$GIMME_OS
+LABEL org.golang.arch=$GIMME_ARCH
 
-# ADD https://raw.githubusercontent.com/travis-ci/gimme/master/gimme /usr/bin/gimme
-# RUN chmod +x /usr/bin/gimme
-# RUN gimme
+ADD https://raw.githubusercontent.com/travis-ci/gimme/master/gimme /usr/bin/gimme
+RUN chmod +x /usr/bin/gimme
+RUN gimme
 
-# ENV GOROOT "/root/.gimme/versions/go${GIMME_GO_VERSION}.${GIMME_OS}.${GIMME_ARCH}"
-# ENV PATH ${GOROOT}/bin:${PATH}
+ENV GOROOT "/root/.gimme/versions/go${GIMME_GO_VERSION}.${GIMME_OS}.${GIMME_ARCH}"
+ENV PATH ${GOROOT}/bin:${PATH}
 
-# ENV GOPATH "/go"
-# ENV PATH $GOPATH/bin:$PATH
+ENV GOPATH "/go"
+ENV PATH $GOPATH/bin:$PATH
 
-# #Install Glide
-# RUN go get github.com/Masterminds/glide
+#Install Glide
+RUN go get github.com/Masterminds/glide
 
-# # Get Go bindings
-# ENV PKG github.com/rai-project/go-mxnet-predictor
-# WORKDIR $GOPATH/src/$PKG
+# Get Go bindings
+ENV PKG github.com/rai-project/go-mxnet-predictor
+WORKDIR $GOPATH/src/$PKG
 
-# # Get Go bindings
+# Get Go bindings
 
-# RUN git clone --depth=1 --branch=master https://${PKG}.git . && \
-#     sed -i "/prefix=/c prefix=\/mxnet" $GOPATH/src/github.com/rai-project/go-mxnet-predictor/travis/mxnet.pc && \
-#     cp $GOPATH/src/github.com/rai-project/go-mxnet-predictor/travis/mxnet.pc /usr/lib/pkgconfig && \
-#     pkg-config --libs mxnet && \
-#     cd $GOPATH/src/$PKG && \
-#     glide install && \
-#     rm -fr vendor/github.com/Sirupsen && \
-#     find vendor -type f -exec sed -i 's/Sirupsen/sirupsen/g' {} + && \
-#     go build -a -installsuffix cgo -ldflags "-s -w -X ${PKG}/Version=${VERSION} -X ${PKG}/GitCommit=${VCS_REF} -X ${PKG}/BuildDate=${BUILD_DATE}"&& \
-#     go install && \
-#     rm -fr vendor
+RUN git clone --depth=1 --branch=master https://${PKG}.git . && \
+    sed -i "/prefix=/c prefix=\/mxnet" $GOPATH/src/github.com/rai-project/go-mxnet-predictor/travis/mxnet.pc && \
+    cp $GOPATH/src/github.com/rai-project/go-mxnet-predictor/travis/mxnet.pc /usr/lib/pkgconfig && \
+    pkg-config --libs mxnet && \
+    cd $GOPATH/src/$PKG && \
+    glide install && \
+    rm -fr vendor/github.com/Sirupsen && \
+    find vendor -type f -exec sed -i 's/Sirupsen/sirupsen/g' {} + && \
+    go build -a -installsuffix cgo -ldflags "-s -w -X ${PKG}/Version=${VERSION} -X ${PKG}/GitCommit=${VCS_REF} -X ${PKG}/BuildDate=${BUILD_DATE}"&& \
+    go install && \
+    rm -fr vendor
