@@ -1,12 +1,13 @@
 FROM ubuntu:16.04
 MAINTAINER Abdul Dakkak <dakkak@illinois.edu>
 
+ENV MXNET_VERSION 0.10.0.post2
 
 # # Build-time metadata as defined at http://label-schema.org
-# ARG BUILD_DATE
-# ARG VCS_REF
-# ARG VERSION
-# ARG ARCH
+ARG BUILD_DATE
+ARG VCS_REF
+ARG VERSION
+ARG ARCH
 # LABEL org.carml.go-mxnet.build-date=$BUILD_DATE \
 #       org.carml.go-mxnet.name="go-mxnet bindings for go" \
 #       org.carml.go-mxnet.description="" \
@@ -16,6 +17,7 @@ MAINTAINER Abdul Dakkak <dakkak@illinois.edu>
 #       org.carml.go-mxnet.vendor="CarML" \
 #       org.carml.go-mxnet.arch=$ARCH \
 #       org.carml.go-mxnet.version=$VERSION \
+#       org.carml.go-mxnet.framework_version=$MXNET_VERSION \
 #       org.carml.go-mxnet.schema-version="1.0"
 
 
@@ -55,7 +57,7 @@ RUN cd /usr/src/gtest && \
     cp *.a /usr/lib
 
 WORKDIR /
-RUN git clone --single-branch --depth 1 --branch 0.10.0.post2 --recursive https://github.com/apache/incubator-mxnet mxnet 
+RUN git clone --single-branch --depth 1 --branch $(MXNET_VERSION) --recursive https://github.com/apache/incubator-mxnet mxnet 
 
 RUN cd mxnet && \
     cp make/config.mk . && \
@@ -77,6 +79,10 @@ ENV LD_LIBRARY_PATH /mxnet/lib:$LD_LIBRARY_PATH
 ENV GIMME_GO_VERSION "1.8.3"
 ENV GIMME_OS "linux"
 ENV GIMME_ARCH $ARCH
+
+LABEL org.golang.version=$GIMME_GO_VERSION
+LABEL org.golang.os=$GIMME_OS
+LABEL org.golang.arch=$GIMME_ARCH
 
 ADD https://raw.githubusercontent.com/travis-ci/gimme/master/gimme /usr/bin/gimme
 RUN chmod +x /usr/bin/gimme
