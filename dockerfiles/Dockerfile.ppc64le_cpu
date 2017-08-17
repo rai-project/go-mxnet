@@ -4,6 +4,7 @@ MAINTAINER Abdul Dakkak <dakkak@illinois.edu>
 # # Build-time metadata as defined at http://label-schema.org
 ARG BUILD_DATE
 ARG VCS_REF
+ARG VCS_URL
 ARG VERSION
 ARG ARCH
 ARG FRAMEWORK_VERSION
