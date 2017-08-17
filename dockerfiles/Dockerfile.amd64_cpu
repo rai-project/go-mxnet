@@ -1,23 +1,24 @@
 FROM ubuntu:16.04
 MAINTAINER Abdul Dakkak <dakkak@illinois.edu>
 
-# # Build-time metadata as defined at http://label-schema.org
+# Build-time metadata as defined at http://label-schema.org
 ARG BUILD_DATE
 ARG VCS_REF
+ARG VCS_URL
 ARG VERSION
 ARG ARCH
 ARG FRAMEWORK_VERSION
-# LABEL org.carml.go-mxnet.build-date=$BUILD_DATE \
-#       org.carml.go-mxnet.name="go-mxnet bindings for go" \
-#       org.carml.go-mxnet.description="" \
-#       org.carml.go-mxnet.url="https://www.carml.org/" \
-#       org.carml.go-mxnet.vcs-ref=$VCS_REF \
-#       org.carml.go-mxnet.vcs-url=$VCS_URL \
-#       org.carml.go-mxnet.vendor="CarML" \
-#       org.carml.go-mxnet.arch=$ARCH \
-#       org.carml.go-mxnet.version=$VERSION \
-#       org.carml.go-mxnet.framework_version=$FRAMEWORK_VERSION \
-#       org.carml.go-mxnet.schema-version="1.0"
+LABEL org.carml.go-mxnet.build-date=$BUILD_DATE \
+      org.carml.go-mxnet.name="go-mxnet bindings for go" \
+      org.carml.go-mxnet.description="" \
+      org.carml.go-mxnet.url="https://www.carml.org/" \
+      org.carml.go-mxnet.vcs-ref=$VCS_REF \
+      org.carml.go-mxnet.vcs-url=$VCS_URL \
+      org.carml.go-mxnet.vendor="CarML" \
+      org.carml.go-mxnet.arch=$ARCH \
+      org.carml.go-mxnet.version=$VERSION \
+      org.carml.go-mxnet.framework_version=$FRAMEWORK_VERSION \
+      org.carml.go-mxnet.schema-version="1.0"
 
 
 # mxnet install with cpu support
