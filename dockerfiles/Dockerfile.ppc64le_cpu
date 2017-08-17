@@ -27,14 +27,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     software-properties-common && \
     add-apt-repository ppa:ubuntu-toolchain-r/test -y && \
     apt-get update && apt-get install -y --no-install-recommends \ 
-        gcc-6 \
-        g++-6  \
+        gcc-7 \
+        g++-7  \
         build-essential \
         git \
         libopenblas-dev \
         libopenblas-base \
-        libopencv-dev \
-        python-opencv \
+        python-dev \
         libcurl4-openssl-dev \
         libgtest-dev \
         cmake \
@@ -43,7 +42,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates \
     && \
     rm -rf /var/lib/apt/lists/* && \
-    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 60 --slave /usr/bin/g++ g++ /usr/bin/g++-6 && \
+    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 60 --slave /usr/bin/g++ g++ /usr/bin/g++-7 && \
     update-alternatives --config gcc && \
     gcc -v 
 
@@ -62,7 +61,7 @@ RUN cd mxnet && \
     cp make/config.mk . && \
     echo "USE_BLAS=openblas" >>config.mk && \
     echo "USE_OPENCV=0" >>config.mk && \
-    echo "ADD_CFLAGS=-I/usr/include/openblas -Wno-sign-compare -ftrack-macro-expansion=0 -Wno-misleading-indentation" >>config.mk && \
+    echo "ADD_CFLAGS=-I/usr/include/openblas -Wno-strict-aliasing -Wno-sign-compare -ftrack-macro-expansion=0 -Wno-misleading-indentation" >>config.mk && \
     echo "USE_CUDA=0" >>config.mk && \
     make && \
     rm -r build
