@@ -56,6 +56,7 @@ RUN git clone  --single-branch --depth 1 --recursive https://github.com/apache/i
     cp make/config.mk . && \
     echo "USE_CPP_PACKAGE=1" >>config.mk && \
     echo "USE_BLAS=openblas" >>config.mk && \
+    echo "USE_OPENCV=0" >>config.mk && \
     echo "USE_CUDA=1" >>config.mk && \
     echo "USE_CUDA_PATH=/usr/local/cuda" >>config.mk && \
     echo "USE_CUDNN=1" >>config.mk && \

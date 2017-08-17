@@ -33,6 +33,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libopenblas-base \
         libcurl4-openssl-dev \
         libgtest-dev \
+        python-dev \
         cmake \
         wget \
         unzip \
@@ -57,6 +58,8 @@ RUN git clone  --single-branch --depth 1 --recursive https://github.com/apache/i
     cp make/config.mk . && \
     echo "USE_CPP_PACKAGE=1" >>config.mk && \
     echo "USE_BLAS=openblas" >>config.mk && \
+    echo "USE_OPENCV=0" >>config.mk && \
+    echo "USE_CUDA=0" >>config.mk && \
     make -j$(nproc) && \
     rm -r build
 
