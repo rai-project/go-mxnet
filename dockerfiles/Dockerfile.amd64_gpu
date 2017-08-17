@@ -28,6 +28,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     apt-get update && apt-get install -y --no-install-recommends \ 
         gcc-7 \
         g++-7  \
+        pkg-config \
         build-essential \
         git \
         libopenblas-dev \
