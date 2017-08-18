@@ -23,11 +23,11 @@ LABEL org.carml.go-mxnet.build-date=$BUILD_DATE \
 
 # mxnet install with gpu support
 
-RUN apt-get update && apt-get install -y --no-install-recommends \ 
-    build-essential \
-    software-properties-common && \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        software-properties-common && \
     add-apt-repository ppa:ubuntu-toolchain-r/test -y && \
-    apt-get update && apt-get install -y --no-install-recommends \ 
+    apt-get update && apt-get install -y --no-install-recommends \
         gcc-5 \
         g++-5  \
         build-essential \
@@ -46,7 +46,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /var/lib/apt/lists/* && \
     update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 60 --slave /usr/bin/g++ g++ /usr/bin/g++-5 && \
     update-alternatives --config gcc && \
-    gcc -v 
+    gcc -v
 
 
 ########## INSTALLATION STEPS ###################
@@ -57,7 +57,7 @@ RUN cd /usr/src/gtest && \
     cp *.a /usr/lib
 
 WORKDIR /
-RUN git clone --single-branch --depth 1 --branch $FRAMEWORK_VERSION --recursive https://github.com/apache/incubator-mxnet mxnet 
+RUN git clone --single-branch --depth 1 --branch $FRAMEWORK_VERSION --recursive https://github.com/apache/incubator-mxnet mxnet
 
 RUN cd mxnet && \
     cp make/config.mk . && \
