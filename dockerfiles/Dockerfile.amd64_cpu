@@ -31,6 +31,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     apt-get update && apt-get install -y --no-install-recommends \
         gcc-5 \
         g++-5  \
+        libjpeg-turbo8-dev \
+        libturbojpeg \
+        libvips-dev \
+        libvips42 \
         build-essential \
         pkg-config \
         git \
