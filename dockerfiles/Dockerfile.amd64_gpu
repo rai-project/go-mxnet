@@ -27,8 +27,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     software-properties-common && \
     add-apt-repository ppa:ubuntu-toolchain-r/test -y && \
     apt-get update && apt-get install -y --no-install-recommends \ 
-        gcc-7 \
-        g++-7  \
+        gcc-5 \
+        g++-5  \
         pkg-config \
         build-essential \
         git \
@@ -43,7 +43,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates \
     && \
     rm -rf /var/lib/apt/lists/* && \
-    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 60 --slave /usr/bin/g++ g++ /usr/bin/g++-7 && \
+    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 60 --slave /usr/bin/g++ g++ /usr/bin/g++-5 && \
     update-alternatives --config gcc && \
     gcc -v 
 
