@@ -43,15 +43,9 @@ RUN ln -s /mxnet/lib/libmxnet.so /usr/lib/libmxnet.so
 ENV LD_LIBRARY_PATH /usr/local/cuda/lib64:$LD_LIBRARY_PATH
 ENV LD_LIBRARY_PATH /mxnet/lib:$LD_LIBRARY_PATH
 
-
-ENV LD_LIBRARY_PATH /mxnet/lib:$LD_LIBRARY_PATH
-
-
 # Get Go bindings
 ENV PKG github.com/rai-project/go-mxnet-predictor
 WORKDIR $GOPATH/src/$PKG
-
-# Get Go bindings
 
 RUN git clone --depth=1 --branch=master https://${PKG}.git . && \
     sed -i "/prefix=/c prefix=\/mxnet" $GOPATH/src/github.com/rai-project/go-mxnet-predictor/travis/mxnet.pc && \

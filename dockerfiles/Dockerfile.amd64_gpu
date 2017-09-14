@@ -1,7 +1,7 @@
 FROM carml/base:amd64-gpu-latest
 MAINTAINER Abdul Dakkak <dakkak@illinois.edu>
 
-# # Build-time metadata as defined at http://label-schema.org
+# Build-time metadata as defined at http://label-schema.org
 ARG BUILD_DATE
 ARG VCS_REF
 ARG VCS_URL
@@ -19,8 +19,6 @@ LABEL org.carml.go-mxnet.build-date=$BUILD_DATE \
       org.carml.go-mxnet.version=$VERSION \
       org.carml.go-mxnet.framework_version=$FRAMEWORK_VERSION \
       org.carml.go-mxnet.schema-version="1.0"
-
-
 
 ########## INSTALLATION STEPS ###################
 
@@ -47,12 +45,9 @@ RUN ln -s /mxnet/lib/libmxnet.so /usr/lib/libmxnet.so
 ENV LD_LIBRARY_PATH /usr/local/cuda/lib64:$LD_LIBRARY_PATH
 ENV LD_LIBRARY_PATH /mxnet/lib:$LD_LIBRARY_PATH
 
-
 # Get Go bindings
 ENV PKG github.com/rai-project/go-mxnet-predictor
 WORKDIR $GOPATH/src/$PKG
-
-# Get Go bindings
 
 RUN git clone --depth=1 --branch=master https://${PKG}.git . && \
     sed -i "/prefix=/c prefix=\/mxnet" $GOPATH/src/github.com/rai-project/go-mxnet-predictor/travis/mxnet.pc && \
