@@ -39,7 +39,7 @@ func main() {
 	dir, _ := filepath.Abs("./tmp")
 	graph := filepath.Join(dir, "squeezenet_v1.0-symbol.json")
 	weights := filepath.Join(dir, "squeezenet_v1.0-0000.params")
-	features := filepath.Join(dir, "synset.txt")
+	// features := filepath.Join(dir, "synset.txt")
 
 	if _, err := downloadmanager.DownloadInto(graph_url, dir); err != nil {
 		os.Exit(-1)
@@ -66,7 +66,7 @@ func main() {
 	p, err := mxnet.CreatePredictor(symbol,
 		params,
 		mxnet.Device{mxnet.CPU_DEVICE, 0},
-		[]mxnet.InputNode{{Key: "data", Shape: []uint32{1, 3, 299, 299}}},
+		[]mxnet.InputNode{{Key: "data", Shape: []uint32{1, 3, 224, 224}}},
 	)
 	if err != nil {
 		panic(err)
@@ -89,10 +89,14 @@ func main() {
 	if err := p.SetInput("data", res); err != nil {
 		panic(err)
 	}
+
+	mxnet.ProfilerConfig(0, "example.json")
 	// do predict
 	if err := p.Forward(); err != nil {
 		panic(err)
 	}
+	mxnet.ProfilerStop()
+	mxnet.ProfilerDump()
 	// get predict result
 	data, err := p.GetOutput(0)
 	if err != nil {
@@ -105,10 +109,10 @@ func main() {
 	as := utils.ArgSort{Args: data, Idxs: idxs}
 	sort.Sort(as)
 	fmt.Println("result:")
-	fmt.Println(as.Args)
-	fmt.Println(as.Idxs)
+	fmt.Println(as.Args[:3])
+	fmt.Println(as.Idxs[:3])
 
-	os.RemoveAll(dir)
+	// os.RemoveAll(dir)
 }
 
 func init() {

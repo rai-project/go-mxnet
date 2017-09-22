@@ -20,7 +20,6 @@ import (
 )
 
 // convert go Image to 1-dim array
-// in the meantime, subtract mean image
 func CvtImageTo1DArray(src image.Image) ([]float32, error) {
 	if src == nil {
 		return nil, fmt.Errorf("src image nil")
