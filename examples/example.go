@@ -64,9 +64,6 @@ func main() {
 		panic(err)
 	}
 
-	mxnet.ProfilerConfig(1, "example.json")
-	mxnet.ProfilerStart()
-
 	// create predictor
 	p, err := mxnet.CreatePredictor(symbol,
 		params,
@@ -94,6 +91,9 @@ func main() {
 	if err := p.SetInput("data", res); err != nil {
 		panic(err)
 	}
+
+	mxnet.ProfilerConfig(1, "example.json")
+	mxnet.ProfilerStart()
 
 	// do predict
 	if err := p.Forward(); err != nil {
@@ -126,13 +126,10 @@ func main() {
 		labels = append(labels, line)
 	}
 
-	pp.Println("result:\n")
 	pp.Println(as.Args[0])
-	pp.Println(as.Idxs[0])
 	pp.Println(labels[as.Idxs[0]])
 
 	mxnet.ProfilerDump()
-
 	// os.RemoveAll(dir)
 }
 
