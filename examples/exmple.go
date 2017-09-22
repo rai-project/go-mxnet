@@ -15,11 +15,13 @@
 package main
 
 import (
-	"fmt"
+	"bufio"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
+
+	"github.com/k0kubun/pp"
 
 	"github.com/anthonynsimon/bild/imgio"
 	"github.com/anthonynsimon/bild/transform"
@@ -39,7 +41,7 @@ func main() {
 	dir, _ := filepath.Abs("./tmp")
 	graph := filepath.Join(dir, "squeezenet_v1.0-symbol.json")
 	weights := filepath.Join(dir, "squeezenet_v1.0-0000.params")
-	// features := filepath.Join(dir, "synset.txt")
+	features := filepath.Join(dir, "synset.txt")
 
 	if _, err := downloadmanager.DownloadInto(graph_url, dir); err != nil {
 		os.Exit(-1)
@@ -77,7 +79,7 @@ func main() {
 	defer p.Free()
 
 	// load test image for predction
-	img, err := imgio.Open("octopus.jpg")
+	img, err := imgio.Open("platypus.jpg")
 	if err != nil {
 		panic(err)
 	}
@@ -111,9 +113,23 @@ func main() {
 	}
 	as := utils.ArgSort{Args: data, Idxs: idxs}
 	sort.Sort(as)
-	fmt.Println("result:")
-	fmt.Println(as.Args[:3])
-	fmt.Println(as.Idxs[:3])
+
+	var labels []string
+	f, err := os.Open(features)
+	if err != nil {
+		os.Exit(-1)
+	}
+	defer f.Close()
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := scanner.Text()
+		labels = append(labels, line)
+	}
+
+	pp.Println("result:\n")
+	pp.Println(as.Args[0])
+	pp.Println(as.Idxs[0])
+	pp.Println(labels[as.Idxs[0]])
 
 	mxnet.ProfilerDump()
 
