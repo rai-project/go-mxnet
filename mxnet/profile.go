@@ -8,12 +8,15 @@ typedef struct MXCallbackList MXCallbackList;
 #include <stdlib.h>
 */
 import "C"
+import "unsafe"
 
 // go binding for MXSetProfilerConfig()
 // param mode kOnlySymbolic: 0, kAllOperator: 1
 // param filename output filename
 func ProfilerConfig(mode int, filename string) error {
-	success, err := C.MXSetProfilerConfig(C.int(mode), C.CString(filename))
+	cs := C.CString(filename)
+	defer C.free(unsafe.Pointer(cs))
+	success, err := C.MXSetProfilerConfig(C.int(mode), cs)
 	if err != nil {
 		return err
 	} else if success < 0 {
@@ -44,7 +47,7 @@ func ProfilerStop() error {
 	return nil
 }
 
-// go binding for MXSetProfilerState(0)
+// go binding for MXDumpProfile()
 func ProfilerDump() error {
 	success, err := C.MXDumpProfile()
 	if err != nil {
