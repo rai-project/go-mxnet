@@ -32,7 +32,7 @@ import (
 )
 
 var (
-	batch        = uint32(10)
+	batch        = 10
 	graph_url    = "http://data.dmlc.ml/models/imagenet/squeezenet/squeezenet_v1.0-symbol.json"
 	weights_url  = "http://data.dmlc.ml/models/imagenet/squeezenet/squeezenet_v1.0-0000.params"
 	features_url = "http://data.dmlc.ml/mxnet/models/imagenet/synset.txt"
@@ -69,7 +69,7 @@ func main() {
 	p, err := mxnet.CreatePredictor(symbol,
 		params,
 		mxnet.Device{mxnet.CPU_DEVICE, 0},
-		[]mxnet.InputNode{{Key: "data", Shape: []uint32{batch, 3, 224, 224}}},
+		[]mxnet.InputNode{{Key: "data", Shape: []uint32{uint32(batch), 3, 224, 224}}},
 	)
 	if err != nil {
 		panic(err)
@@ -77,9 +77,8 @@ func main() {
 	defer p.Free()
 
 	var input []float32
-	cnt := uint32(0)
+	cnt := 0
 
-	pp.Println(len(input))
 	dir, _ = filepath.Abs("../_fixtures")
 	err = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if path == dir || cnt >= batch {
@@ -104,10 +103,8 @@ func main() {
 		panic(err)
 	}
 
-	pp.Println("cnt == %d", cnt)
 	padding := make([]float32, (batch-cnt)*3*224*224)
 	input = append(input, padding...)
-	pp.Println(len(input))
 
 	// set input
 	if err := p.SetInput("data", input); err != nil {
@@ -129,27 +126,32 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	idxs := make([]int, len(output))
-	for i := range output {
-		idxs[i] = i
-	}
-	as := utils.ArgSort{Args: output, Idxs: idxs}
-	sort.Sort(as)
+	len := len(output) / batch
 
-	var labels []string
-	f, err := os.Open(features)
-	if err != nil {
-		os.Exit(-1)
-	}
-	defer f.Close()
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		line := scanner.Text()
-		labels = append(labels, line)
-	}
+	for i := 0; i < cnt; i++ {
 
-	pp.Println(as.Args[0])
-	pp.Println(labels[as.Idxs[0]])
+		idxs := make([]int, len)
+		for j := 0; j < len; j++ {
+			idxs[j] = j
+		}
+		as := utils.ArgSort{Args: output[i*len : (i+1)*len], Idxs: idxs}
+		sort.Sort(as)
+
+		var labels []string
+		f, err := os.Open(features)
+		if err != nil {
+			os.Exit(-1)
+		}
+		defer f.Close()
+		scanner := bufio.NewScanner(f)
+		for scanner.Scan() {
+			line := scanner.Text()
+			labels = append(labels, line)
+		}
+
+		pp.Println(as.Args[0])
+		pp.Println(labels[as.Idxs[0]])
+	}
 
 	// dump profiling at the end
 	mxnet.ProfilerDump()
