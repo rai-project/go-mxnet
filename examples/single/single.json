@@ -525,433 +525,433 @@
             "name": "[Convolution,Activation,Pooling",
             "cat": "category",
             "ph": "B",
-            "ts": 1090132,
+            "ts": 854454,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation,Pooling",
             "cat": "category",
             "ph": "E",
-            "ts": 1104066,
+            "ts": 870674,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation]",
             "cat": "category",
             "ph": "B",
-            "ts": 1104071,
+            "ts": 870683,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation]",
             "cat": "category",
             "ph": "E",
-            "ts": 1104557,
+            "ts": 871264,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation]",
             "cat": "category",
             "ph": "B",
-            "ts": 1104561,
+            "ts": 871268,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation]",
             "cat": "category",
             "ph": "E",
-            "ts": 1105020,
+            "ts": 871618,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation,Concat]",
             "cat": "category",
             "ph": "B",
-            "ts": 1105023,
+            "ts": 871621,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation,Concat]",
             "cat": "category",
             "ph": "E",
-            "ts": 1106733,
+            "ts": 873291,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation]",
             "cat": "category",
             "ph": "B",
-            "ts": 1106736,
+            "ts": 873296,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation]",
             "cat": "category",
             "ph": "E",
-            "ts": 1107379,
+            "ts": 873792,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation]",
             "cat": "category",
             "ph": "B",
-            "ts": 1107381,
+            "ts": 873797,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation]",
             "cat": "category",
             "ph": "E",
-            "ts": 1107746,
+            "ts": 874203,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation,Concat]",
             "cat": "category",
             "ph": "B",
-            "ts": 1107750,
+            "ts": 874205,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation,Concat]",
             "cat": "category",
             "ph": "E",
-            "ts": 1108978,
+            "ts": 875954,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation]",
             "cat": "category",
             "ph": "B",
-            "ts": 1108982,
+            "ts": 875960,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation]",
             "cat": "category",
             "ph": "E",
-            "ts": 1109508,
+            "ts": 876831,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation]",
             "cat": "category",
             "ph": "B",
-            "ts": 1109511,
+            "ts": 876836,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation]",
             "cat": "category",
             "ph": "E",
-            "ts": 1110222,
+            "ts": 877543,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation,Concat,",
             "cat": "category",
             "ph": "B",
-            "ts": 1110225,
+            "ts": 877546,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation,Concat,",
             "cat": "category",
             "ph": "E",
-            "ts": 1115355,
+            "ts": 882825,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation]",
             "cat": "category",
             "ph": "B",
-            "ts": 1115359,
+            "ts": 882831,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation]",
             "cat": "category",
             "ph": "E",
-            "ts": 1115710,
+            "ts": 883287,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation]",
             "cat": "category",
             "ph": "B",
-            "ts": 1115712,
+            "ts": 883290,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation]",
             "cat": "category",
             "ph": "E",
-            "ts": 1115940,
+            "ts": 883588,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation,Concat]",
             "cat": "category",
             "ph": "B",
-            "ts": 1115943,
+            "ts": 883592,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation,Concat]",
             "cat": "category",
             "ph": "E",
-            "ts": 1116577,
+            "ts": 884239,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation]",
             "cat": "category",
             "ph": "B",
-            "ts": 1116579,
+            "ts": 884242,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation]",
             "cat": "category",
             "ph": "E",
-            "ts": 1116925,
+            "ts": 884684,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation]",
             "cat": "category",
             "ph": "B",
-            "ts": 1116927,
+            "ts": 884686,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation]",
             "cat": "category",
             "ph": "E",
-            "ts": 1117251,
+            "ts": 885196,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation,Concat]",
             "cat": "category",
             "ph": "B",
-            "ts": 1117254,
+            "ts": 885198,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation,Concat]",
             "cat": "category",
             "ph": "E",
-            "ts": 1118381,
+            "ts": 886779,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation]",
             "cat": "category",
             "ph": "B",
-            "ts": 1118384,
+            "ts": 886784,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation]",
             "cat": "category",
             "ph": "E",
-            "ts": 1118904,
+            "ts": 887318,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation]",
             "cat": "category",
             "ph": "B",
-            "ts": 1118907,
+            "ts": 887322,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation]",
             "cat": "category",
             "ph": "E",
-            "ts": 1119251,
+            "ts": 887672,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation,Concat]",
             "cat": "category",
             "ph": "B",
-            "ts": 1119254,
+            "ts": 887675,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation,Concat]",
             "cat": "category",
             "ph": "E",
-            "ts": 1120333,
+            "ts": 888770,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation]",
             "cat": "category",
             "ph": "B",
-            "ts": 1120336,
+            "ts": 888772,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation]",
             "cat": "category",
             "ph": "E",
-            "ts": 1120835,
+            "ts": 889263,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation]",
             "cat": "category",
             "ph": "B",
-            "ts": 1120837,
+            "ts": 889265,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation]",
             "cat": "category",
             "ph": "E",
-            "ts": 1121279,
+            "ts": 889702,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation,Concat,",
             "cat": "category",
             "ph": "B",
-            "ts": 1121281,
+            "ts": 889704,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation,Concat,",
             "cat": "category",
             "ph": "E",
-            "ts": 1123959,
+            "ts": 893106,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation]",
             "cat": "category",
             "ph": "B",
-            "ts": 1123962,
+            "ts": 893111,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation]",
             "cat": "category",
             "ph": "E",
-            "ts": 1124203,
+            "ts": 893389,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation]",
             "cat": "category",
             "ph": "B",
-            "ts": 1124206,
+            "ts": 893393,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation]",
             "cat": "category",
             "ph": "E",
-            "ts": 1124337,
+            "ts": 893561,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation,Concat,",
             "cat": "category",
             "ph": "B",
-            "ts": 1124338,
+            "ts": 893564,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation,Concat,",
             "cat": "category",
             "ph": "E",
-            "ts": 1125098,
+            "ts": 894342,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation,Pooling",
             "cat": "category",
             "ph": "B",
-            "ts": 1125101,
+            "ts": 894345,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[Convolution,Activation,Pooling",
             "cat": "category",
             "ph": "E",
-            "ts": 1127064,
+            "ts": 896363,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[SoftmaxOutput]",
             "cat": "category",
             "ph": "B",
-            "ts": 1127066,
+            "ts": 896367,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         },
         {
             "name": "[SoftmaxOutput]",
             "cat": "category",
             "ph": "E",
-            "ts": 1127099,
+            "ts": 896407,
             "pid": 0,
-            "tid": 2434135268
+            "tid": 1226469170
         }
 
     ],

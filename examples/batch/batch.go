@@ -32,13 +32,14 @@ import (
 )
 
 var (
+	batch        = uint32(1)
 	graph_url    = "http://data.dmlc.ml/models/imagenet/squeezenet/squeezenet_v1.0-symbol.json"
 	weights_url  = "http://data.dmlc.ml/models/imagenet/squeezenet/squeezenet_v1.0-0000.params"
 	features_url = "http://data.dmlc.ml/mxnet/models/imagenet/synset.txt"
 )
 
 func main() {
-	dir, _ := filepath.Abs("./tmp")
+	dir, _ := filepath.Abs("../tmp")
 	graph := filepath.Join(dir, "squeezenet_v1.0-symbol.json")
 	weights := filepath.Join(dir, "squeezenet_v1.0-0000.params")
 	features := filepath.Join(dir, "synset.txt")
@@ -68,27 +69,44 @@ func main() {
 	p, err := mxnet.CreatePredictor(symbol,
 		params,
 		mxnet.Device{mxnet.CPU_DEVICE, 0},
-		[]mxnet.InputNode{{Key: "data", Shape: []uint32{1, 3, 224, 224}}},
+		[]mxnet.InputNode{{Key: "data", Shape: []uint32{batch, 3, 224, 224}}},
 	)
 	if err != nil {
 		panic(err)
 	}
 	defer p.Free()
 
-	// load test image for predction
-	img, err := imgio.Open("platypus.jpg")
-	if err != nil {
-		panic(err)
-	}
-	// preprocess
-	resized := transform.Resize(img, 224, 224, transform.Linear)
-	res, err := utils.CvtImageTo1DArray(resized)
+	input := make([]float32, batch*3*224*224)
+	cnt := uint32(0)
+
+	dir, _ = filepath.Abs("../_fixtures")
+	err = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if path == dir || cnt >= batch {
+			return nil
+		}
+
+		img, err := imgio.Open(path)
+		if err != nil {
+			return err
+		}
+		resized := transform.Resize(img, 224, 224, transform.Linear)
+		res, err := utils.CvtImageTo1DArray(resized)
+		if err != nil {
+			panic(err)
+		}
+		cnt++
+		input = append(input, res...)
+
+		return nil
+	})
 	if err != nil {
 		panic(err)
 	}
 
+	pp.Println("cnt = %v", cnt)
+
 	// set input
-	if err := p.SetInput("data", res); err != nil {
+	if err := p.SetInput("data", input); err != nil {
 		panic(err)
 	}
 
@@ -103,15 +121,15 @@ func main() {
 	mxnet.ProfilerStop()
 
 	// get predict result
-	data, err := p.GetOutput(0)
+	output, err := p.GetOutput(0)
 	if err != nil {
 		panic(err)
 	}
-	idxs := make([]int, len(data))
-	for i := range data {
+	idxs := make([]int, len(output))
+	for i := range output {
 		idxs[i] = i
 	}
-	as := utils.ArgSort{Args: data, Idxs: idxs}
+	as := utils.ArgSort{Args: output, Idxs: idxs}
 	sort.Sort(as)
 
 	var labels []string
@@ -129,7 +147,9 @@ func main() {
 	pp.Println(as.Args[0])
 	pp.Println(labels[as.Idxs[0]])
 
+	// dump profiling at the end
 	mxnet.ProfilerDump()
+
 	// os.RemoveAll(dir)
 }
 
