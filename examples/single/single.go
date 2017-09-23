@@ -92,15 +92,19 @@ func main() {
 		panic(err)
 	}
 
-	mxnet.ProfilerConfig(1, "single.json")
-	mxnet.ProfilerStart()
+	profiler, err := mxnet.NewProfile(mxnet.ProfileAllOperators)
+	if err != nil {
+		panic(err)
+	}
+
+	profiler.Start()
 
 	// do predict
 	if err := p.Forward(); err != nil {
 		panic(err)
 	}
 
-	mxnet.ProfilerStop()
+	profiler.Stop()
 
 	// get predict result
 	data, err := p.GetOutput(0)
@@ -129,7 +133,12 @@ func main() {
 	pp.Println(as.Args[0])
 	pp.Println(labels[as.Idxs[0]])
 
-	mxnet.ProfilerDump()
+	filename, err := profiler.Dump()
+	if err != nil {
+		panic(err)
+	}
+	pp.Println(filename)
+
 	// os.RemoveAll(dir)
 }
 

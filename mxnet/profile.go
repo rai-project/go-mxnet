@@ -43,7 +43,6 @@ const (
 // param mode kOnlySymbolic: 0, kAllOperator: 1
 // param filename output filename
 func NewProfile(mode ProfileMode) (*Profile, error) {
-
 	tmpDir := filepath.Join(config.App.TempDir, "mxnet")
 	filename, err := tempFile(tmpDir, "profile", ".json")
 	if err != nil {
@@ -59,6 +58,7 @@ func NewProfile(mode ProfileMode) (*Profile, error) {
 	if success < 0 {
 		return nil, GetLastError()
 	}
+
 	return &Profile{
 		Trace:    nil,
 		filename: filename,
@@ -77,6 +77,7 @@ func (p *Profile) Start() error {
 		return GetLastError()
 	}
 	p.started = true
+
 	return nil
 }
 
@@ -98,6 +99,7 @@ func (p *Profile) Stop() error {
 	if success < 0 {
 		return GetLastError()
 	}
+
 	return nil
 }
 
@@ -115,6 +117,7 @@ func (p *Profile) Dump() (string, error) {
 	defer func() {
 		p.dumped = true
 	}()
+
 	success, err := C.MXDumpProfile()
 	if err != nil {
 		return "", err
@@ -122,12 +125,11 @@ func (p *Profile) Dump() (string, error) {
 	if success < 0 {
 		return "", GetLastError()
 	}
+
 	return p.filename, nil
 }
 
-// go binding for MXDumpProfile()
 func (p *Profile) String() (string, error) {
-
 	err := p.Read()
 	if err != nil {
 		return "", err
@@ -137,6 +139,7 @@ func (p *Profile) String() (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	return string(bts), nil
 }
 
@@ -170,6 +173,7 @@ func (p *Profile) Read() error {
 		p.Trace = nil
 		return err
 	}
+
 	return nil
 }
 
@@ -177,6 +181,7 @@ func (p *Profile) Delete() error {
 	if !com.IsFile(p.filename) {
 		return nil
 	}
+
 	return os.Remove(p.filename)
 }
 
@@ -184,5 +189,6 @@ func (p *Profile) Publish(ctx context.Context, opts ...opentracing.StartSpanOpti
 	if err := p.Read(); err != nil {
 		return nil, nil, err
 	}
+
 	return p.Trace.Publish(ctx, "mxnet_profile", opts...)
 }
