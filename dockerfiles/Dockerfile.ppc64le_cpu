@@ -9,35 +9,36 @@ ARG VERSION
 ARG ARCH
 ARG FRAMEWORK_VERSION
 LABEL org.carml.go-mxnet.build-date=$BUILD_DATE \
-      org.carml.go-mxnet.name="go-mxnet bindings for go" \
-      org.carml.go-mxnet.description="" \
-      org.carml.go-mxnet.url="https://www.carml.org/" \
-      org.carml.go-mxnet.vcs-ref=$VCS_REF \
-      org.carml.go-mxnet.vcs-url=$VCS_URL \
-      org.carml.go-mxnet.vendor="CarML" \
-      org.carml.go-mxnet.arch=$ARCH \
-      org.carml.go-mxnet.version=$VERSION \
-      org.carml.go-mxnet.framework_version=$FRAMEWORK_VERSION \
-      org.carml.go-mxnet.schema-version="1.0"
+  org.carml.go-mxnet.name="go-mxnet bindings for go" \
+  org.carml.go-mxnet.description="" \
+  org.carml.go-mxnet.url="https://www.carml.org/" \
+  org.carml.go-mxnet.vcs-ref=$VCS_REF \
+  org.carml.go-mxnet.vcs-url=$VCS_URL \
+  org.carml.go-mxnet.vendor="CarML" \
+  org.carml.go-mxnet.arch=$ARCH \
+  org.carml.go-mxnet.version=$VERSION \
+  org.carml.go-mxnet.framework_version=$FRAMEWORK_VERSION \
+  org.carml.go-mxnet.schema-version="1.0"
 
 ########## INSTALLATION STEPS ###################
 
 RUN cd /usr/src/gtest && \
-    cmake CMakeLists.txt && \
-    make && \
-    cp *.a /usr/lib
+  cmake CMakeLists.txt && \
+  make && \
+  cp *.a /usr/lib
 
 WORKDIR /
 RUN git clone --single-branch --depth 1 --branch $FRAMEWORK_VERSION --recursive https://github.com/apache/incubator-mxnet mxnet
 
 RUN cd mxnet && \
-    cp make/config.mk . && \
-    echo "USE_BLAS=openblas" >>config.mk && \
-    echo "USE_OPENCV=0" >>config.mk && \
-    echo "ADD_CFLAGS=-I/usr/include/openblas -Wno-strict-aliasing -Wno-sign-compare -ftrack-macro-expansion=0 -Wno-misleading-indentation" >>config.mk && \
-    echo "USE_CUDA=0" >>config.mk && \
-    make && \
-    rm -r build
+  cp make/config.mk . && \
+  echo "USE_BLAS=openblas" >>config.mk && \
+  echo "USE_OPENCV=0" >>config.mk && \
+  echo "ADD_CFLAGS=-I/usr/include/openblas -Wno-strict-aliasing -Wno-sign-compare -ftrack-macro-expansion=0 -Wno-misleading-indentation" >>config.mk && \
+  echo "USE_CUDA=0" >>config.mk && \
+  echo "USE_PROFILER=1" >>config.mk && \
+  make && \
+  rm -r build
 
 RUN ln -s /mxnet/lib/libmxnet.so /usr/lib/libmxnet.so
 ENV LD_LIBRARY_PATH /usr/local/cuda/lib64:$LD_LIBRARY_PATH
@@ -48,13 +49,13 @@ ENV PKG github.com/rai-project/go-mxnet-predictor
 WORKDIR $GOPATH/src/$PKG
 
 RUN git clone --depth=1 --branch=master https://${PKG}.git . && \
-    sed -i "/prefix=/c prefix=\/mxnet" $GOPATH/src/github.com/rai-project/go-mxnet-predictor/travis/mxnet.pc && \
-    cp $GOPATH/src/github.com/rai-project/go-mxnet-predictor/travis/mxnet.pc /usr/lib/pkgconfig && \
-    pkg-config --libs mxnet && \
-    cd $GOPATH/src/$PKG && \
-    glide install && \
-    rm -fr vendor/github.com/Sirupsen && \
-    find vendor -type f -exec sed -i 's/Sirupsen/sirupsen/g' {} + && \
-    go build -a -installsuffix cgo -ldflags "-s -w -X ${PKG}/Version=${VERSION} -X ${PKG}/GitCommit=${VCS_REF} -X ${PKG}/BuildDate=${BUILD_DATE}"&& \
-    go install && \
-    rm -fr vendor
+  sed -i "/prefix=/c prefix=\/mxnet" $GOPATH/src/github.com/rai-project/go-mxnet-predictor/travis/mxnet.pc && \
+  cp $GOPATH/src/github.com/rai-project/go-mxnet-predictor/travis/mxnet.pc /usr/lib/pkgconfig && \
+  pkg-config --libs mxnet && \
+  cd $GOPATH/src/$PKG && \
+  glide install && \
+  rm -fr vendor/github.com/Sirupsen && \
+  find vendor -type f -exec sed -i 's/Sirupsen/sirupsen/g' {} + && \
+  go build -a -installsuffix cgo -ldflags "-s -w -X ${PKG}/Version=${VERSION} -X ${PKG}/GitCommit=${VCS_REF} -X ${PKG}/BuildDate=${BUILD_DATE}"&& \
+  go install && \
+  rm -fr vendor

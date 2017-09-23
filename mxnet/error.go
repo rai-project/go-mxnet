@@ -22,14 +22,14 @@ package mxnet
 */
 import "C"
 import (
-	"fmt"
+	"github.com/pkg/errors"
 )
 
 // get the last error happeneed.
 // go binding for MXGetLastError
 func GetLastError() error {
 	if err := C.MXGetLastError(); err != nil {
-		return fmt.Errorf(C.GoString(err))
+		return errors.Errorf("error in mxnet :: %v", C.GoString(err))
 	}
 	return nil
 }
