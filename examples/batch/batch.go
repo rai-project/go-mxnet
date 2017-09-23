@@ -111,15 +111,19 @@ func main() {
 		panic(err)
 	}
 
-	mxnet.ProfilerConfig(1, "batch.json")
-	mxnet.ProfilerStart()
+	profiler, err := mxnet.NewProfile(mxnet.ProfileAllOperators)
+	if err != nil {
+		panic(err)
+	}
+
+	profiler.Start()
 
 	// do predict
 	if err := p.Forward(); err != nil {
 		panic(err)
 	}
 
-	mxnet.ProfilerStop()
+	profiler.Stop()
 
 	// get predict result
 	output, err := p.GetOutput(0)
@@ -154,7 +158,11 @@ func main() {
 	}
 
 	// dump profiling at the end
-	mxnet.ProfilerDump()
+	filename, err := profiler.Dump()
+	if err != nil {
+		panic(err)
+	}
+	pp.Println(filename)
 
 	// os.RemoveAll(dir)
 }

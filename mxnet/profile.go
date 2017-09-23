@@ -66,6 +66,7 @@ func NewProfile(mode ProfileMode, tmpDir string) (*Profile, error) {
 	if success != 0 {
 		return nil, GetLastError()
 	}
+
 	return &Profile{
 		Trace:    nil,
 		filename: filename,
@@ -85,6 +86,7 @@ func (p *Profile) Start() error {
 	}
 	p.startTime = time.Now()
 	p.started = true
+
 	return nil
 }
 
@@ -107,6 +109,7 @@ func (p *Profile) Stop() error {
 	if success != 0 {
 		return GetLastError()
 	}
+
 	return nil
 }
 
@@ -124,6 +127,7 @@ func (p *Profile) Dump() (string, error) {
 	defer func() {
 		p.dumped = true
 	}()
+
 	success, err := C.MXDumpProfile()
 	if err != nil {
 		return "", err
@@ -131,12 +135,11 @@ func (p *Profile) Dump() (string, error) {
 	if success != 0 {
 		return "", GetLastError()
 	}
+
 	return p.filename, nil
 }
 
-// go binding for MXDumpProfile()
 func (p *Profile) String() (string, error) {
-
 	err := p.Read()
 	if err != nil {
 		return "", err
@@ -146,6 +149,7 @@ func (p *Profile) String() (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	return string(bts), nil
 }
 
@@ -189,6 +193,7 @@ func (p *Profile) Delete() error {
 	if !com.IsFile(p.filename) {
 		return nil
 	}
+
 	return os.Remove(p.filename)
 }
 
