@@ -22,12 +22,12 @@ import (
 	"sort"
 
 	"github.com/k0kubun/pp"
+	"github.com/songtianyi/go-mxnet-predictor/mxnet"
 
 	"github.com/anthonynsimon/bild/imgio"
 	"github.com/anthonynsimon/bild/transform"
 	"github.com/rai-project/config"
 	"github.com/rai-project/downloadmanager"
-	"github.com/rai-project/go-mxnet-predictor/mxnet"
 	"github.com/rai-project/go-mxnet-predictor/utils"
 )
 
@@ -65,23 +65,12 @@ func main() {
 		panic(err)
 	}
 
-	// create predictor
-	p, err := mxnet.CreatePredictor(symbol,
-		params,
-		mxnet.Device{mxnet.CPU_DEVICE, 0},
-		[]mxnet.InputNode{{Key: "data", Shape: []uint32{uint32(batch), 3, 224, 224}}},
-	)
-	if err != nil {
-		panic(err)
-	}
-	defer p.Free()
-
 	var input []float32
 	cnt := 0
 
-	dir, _ = filepath.Abs("../_fixtures")
-	err = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if path == dir || filepath.Ext(path) != ".jpg" || cnt >= batch {
+	imgDir, _ := filepath.Abs("../_fixtures")
+	err = filepath.Walk(imgDir, func(path string, info os.FileInfo, err error) error {
+		if path == imgDir || filepath.Ext(path) != ".jpg" || cnt >= batch {
 			return nil
 		}
 
@@ -106,24 +95,26 @@ func main() {
 	padding := make([]float32, (batch-cnt)*3*224*224)
 	input = append(input, padding...)
 
+	// create predictor
+	p, err := mxnet.CreatePredictor(symbol,
+		params,
+		mxnet.Device{mxnet.CPU_DEVICE, 0},
+		[]mxnet.InputNode{{Key: "data", Shape: []uint32{uint32(batch), 3, 224, 224}}},
+	)
+	if err != nil {
+		panic(err)
+	}
+	defer p.Free()
+
 	// set input
 	if err := p.SetInput("data", input); err != nil {
 		panic(err)
 	}
 
-	profiler, err := mxnet.NewProfile(mxnet.ProfileAllOperators)
-	if err != nil {
-		panic(err)
-	}
-
-	profiler.Start()
-
 	// do predict
 	if err := p.Forward(); err != nil {
 		panic(err)
 	}
-
-	profiler.Stop()
 
 	// get predict result
 	output, err := p.GetOutput(0)
@@ -156,13 +147,6 @@ func main() {
 		pp.Println(as.Args[0])
 		pp.Println(labels[as.Idxs[0]])
 	}
-
-	// dump profiling at the end
-	filename, err := profiler.Dump()
-	if err != nil {
-		panic(err)
-	}
-	pp.Println(filename)
 
 	// os.RemoveAll(dir)
 }
