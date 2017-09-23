@@ -81,7 +81,7 @@ func main() {
 
 	dir, _ = filepath.Abs("../_fixtures")
 	err = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if path == dir || cnt >= batch {
+		if path == dir || filepath.Ext(path) != ".jpg" || cnt >= batch {
 			return nil
 		}
 
