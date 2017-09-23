@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"time"
 	"unsafe"
 
 	"github.com/Unknwon/com"
@@ -25,11 +26,13 @@ typedef struct MXCallbackList MXCallbackList;
 import "C"
 
 type Profile struct {
-	*chrome.Trace
-	started  bool
-	stopped  bool
-	dumped   bool
-	filename string
+	Trace     *chrome.Trace
+	startTime time.Time
+	endTime   time.Time
+	started   bool
+	stopped   bool
+	dumped    bool
+	filename  string
 }
 
 type ProfileMode int
@@ -42,10 +45,14 @@ const (
 // go binding for MXSetProfilerConfig()
 // param mode kOnlySymbolic: 0, kAllOperator: 1
 // param filename output filename
-func NewProfile(mode ProfileMode) (*Profile, error) {
-
-	tmpDir := filepath.Join(config.App.TempDir, "mxnet")
-	filename, err := tempFile(tmpDir, "profile", ".json")
+func NewProfile(mode ProfileMode, tmpDir string) (*Profile, error) {
+	if tmpDir == "" {
+		tmpDir = filepath.Join(config.App.TempDir, "mxnet", "profile")
+		if !com.IsDir(tmpDir) {
+			os.MkdirAll(tmpDir, os.FileMode(0755))
+		}
+	}
+	filename, err := tempFile(tmpDir, "profile-", ".json")
 	if err != nil {
 		return nil, errors.Errorf("cannot create temporary file in %v", tmpDir)
 	}
@@ -56,7 +63,7 @@ func NewProfile(mode ProfileMode) (*Profile, error) {
 	if err != nil {
 		return nil, err
 	}
-	if success < 0 {
+	if success != 0 {
 		return nil, GetLastError()
 	}
 	return &Profile{
@@ -73,9 +80,10 @@ func (p *Profile) Start() error {
 	if err != nil {
 		return err
 	}
-	if success < 0 {
+	if success != 0 {
 		return GetLastError()
 	}
+	p.startTime = time.Now()
 	p.started = true
 	return nil
 }
@@ -91,11 +99,12 @@ func (p *Profile) Stop() error {
 	defer func() {
 		p.stopped = true
 	}()
+	p.endTime = time.Now()
 	success, err := C.MXSetProfilerState(C.int(0))
 	if err != nil {
 		return err
 	}
-	if success < 0 {
+	if success != 0 {
 		return GetLastError()
 	}
 	return nil
@@ -119,7 +128,7 @@ func (p *Profile) Dump() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if success < 0 {
+	if success != 0 {
 		return "", GetLastError()
 	}
 	return p.filename, nil
@@ -166,10 +175,13 @@ func (p *Profile) Read() error {
 	if err != nil {
 		return err
 	}
+	p.Trace = new(chrome.Trace)
 	if err := json.Unmarshal(bts, p.Trace); err != nil {
 		p.Trace = nil
-		return err
+		return errors.Wrapf(err, "failed to unmarshal %v", p.filename)
 	}
+	p.Trace.StartTime = p.startTime
+	p.Trace.EndTime = p.endTime
 	return nil
 }
 
@@ -180,9 +192,9 @@ func (p *Profile) Delete() error {
 	return os.Remove(p.filename)
 }
 
-func (p *Profile) Publish(ctx context.Context, opts ...opentracing.StartSpanOption) (opentracing.Span, context.Context, error) {
+func (p *Profile) Publish(ctx context.Context, operationName string, opts ...opentracing.StartSpanOption) (opentracing.Span, context.Context, error) {
 	if err := p.Read(); err != nil {
 		return nil, nil, err
 	}
-	return p.Trace.Publish(ctx, "mxnet_profile", opts...)
+	return p.Trace.Publish(ctx, operationName, opts...)
 }
