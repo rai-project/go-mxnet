@@ -22,13 +22,17 @@ import (
 typedef struct MXCallbackList MXCallbackList;
 #include <mxnet/c_api.h>
 #include <stdlib.h>
+
 */
 import "C"
+
+var initTime time.Time
 
 type Profile struct {
 	Trace     *chrome.Trace
 	startTime time.Time
 	endTime   time.Time
+	initTime  time.Time
 	started   bool
 	stopped   bool
 	dumped    bool
@@ -70,6 +74,7 @@ func NewProfile(mode ProfileMode, tmpDir string) (*Profile, error) {
 	return &Profile{
 		Trace:    nil,
 		filename: filename,
+		initTime: initTime,
 		stopped:  false,
 		dumped:   false,
 	}, nil
@@ -184,6 +189,8 @@ func (p *Profile) Read() error {
 		p.Trace = nil
 		return errors.Wrapf(err, "failed to unmarshal %v", p.filename)
 	}
+	p.Trace.DisplayTimeUnit = "us"
+	p.Trace.InitTime = p.initTime
 	p.Trace.StartTime = p.startTime
 	p.Trace.EndTime = p.endTime
 	return nil
@@ -202,4 +209,8 @@ func (p *Profile) Publish(ctx context.Context, operationName string, opts ...ope
 		return nil, nil, err
 	}
 	return p.Trace.Publish(ctx, operationName, opts...)
+}
+
+func init() {
+	initTime = time.Now()
 }
