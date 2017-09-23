@@ -32,7 +32,7 @@ import (
 )
 
 var (
-	batch        = uint32(1)
+	batch        = uint32(10)
 	graph_url    = "http://data.dmlc.ml/models/imagenet/squeezenet/squeezenet_v1.0-symbol.json"
 	weights_url  = "http://data.dmlc.ml/models/imagenet/squeezenet/squeezenet_v1.0-0000.params"
 	features_url = "http://data.dmlc.ml/mxnet/models/imagenet/synset.txt"
@@ -76,9 +76,10 @@ func main() {
 	}
 	defer p.Free()
 
-	input := make([]float32, batch*3*224*224)
+	var input []float32
 	cnt := uint32(0)
 
+	pp.Println(len(input))
 	dir, _ = filepath.Abs("../_fixtures")
 	err = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if path == dir || cnt >= batch {
@@ -94,8 +95,8 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		cnt++
 		input = append(input, res...)
+		cnt++
 
 		return nil
 	})
@@ -103,14 +104,17 @@ func main() {
 		panic(err)
 	}
 
-	pp.Println("cnt = %v", cnt)
+	pp.Println("cnt == %d", cnt)
+	padding := make([]float32, (batch-cnt)*3*224*224)
+	input = append(input, padding...)
+	pp.Println(len(input))
 
 	// set input
 	if err := p.SetInput("data", input); err != nil {
 		panic(err)
 	}
 
-	mxnet.ProfilerConfig(1, "example.json")
+	mxnet.ProfilerConfig(1, "batch.json")
 	mxnet.ProfilerStart()
 
 	// do predict
