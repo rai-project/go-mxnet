@@ -121,28 +121,27 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	var labels []string
+	f, err := os.Open(features)
+	if err != nil {
+		os.Exit(-1)
+	}
+	defer f.Close()
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := scanner.Text()
+		labels = append(labels, line)
+	}
+
 	len := len(output) / batch
-
 	for i := 0; i < cnt; i++ {
-
 		idxs := make([]int, len)
 		for j := 0; j < len; j++ {
 			idxs[j] = j
 		}
 		as := utils.ArgSort{Args: output[i*len : (i+1)*len], Idxs: idxs}
 		sort.Sort(as)
-
-		var labels []string
-		f, err := os.Open(features)
-		if err != nil {
-			os.Exit(-1)
-		}
-		defer f.Close()
-		scanner := bufio.NewScanner(f)
-		for scanner.Scan() {
-			line := scanner.Text()
-			labels = append(labels, line)
-		}
 
 		pp.Println(as.Args[0])
 		pp.Println(labels[as.Idxs[0]])
