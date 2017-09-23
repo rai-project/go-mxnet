@@ -48,9 +48,9 @@ const (
 func NewProfile(mode ProfileMode, tmpDir string) (*Profile, error) {
 	if tmpDir == "" {
 		tmpDir = filepath.Join(config.App.TempDir, "mxnet", "profile")
-		if !com.IsDir(tmpDir) {
-			os.MkdirAll(tmpDir, os.FileMode(0755))
-		}
+	}
+	if !com.IsDir(tmpDir) {
+		os.MkdirAll(tmpDir, os.FileMode(0755))
 	}
 	filename, err := tempFile(tmpDir, "profile-", ".json")
 	if err != nil {
