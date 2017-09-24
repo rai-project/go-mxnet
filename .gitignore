@@ -1,6 +1,5 @@
-examples/flowers/predict
-predict
-tests/pr3/pr3
-vendor
+*.d
+*.o
 tmp
-*DS_Store
+*.DS_Store
+vendor
