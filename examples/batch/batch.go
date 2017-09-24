@@ -8,7 +8,7 @@ import (
 	"sort"
 
 	"github.com/k0kubun/pp"
-	"github.com/songtianyi/go-mxnet-predictor/mxnet"
+	"github.com/rai-project/go-mxnet-predictor/mxnet"
 
 	"github.com/anthonynsimon/bild/imgio"
 	"github.com/anthonynsimon/bild/transform"
@@ -78,14 +78,12 @@ func main() {
 		panic(err)
 	}
 
-	padding := make([]float32, (batch-cnt)*3*224*224)
-	input = append(input, padding...)
-
 	// create predictor
-	p, err := mxnet.CreatePredictor(symbol,
-		params,
-		mxnet.Device{mxnet.CPU_DEVICE, 0},
-		[]mxnet.InputNode{{Key: "data", Shape: []uint32{uint32(batch), 3, 224, 224}}},
+	p, err := mxnet.CreatePredictor(
+		mxnet.Symbol(symbol),
+		mxnet.Weights(params),
+		mxnet.InputNode("data", []uint32{3, 224, 224}),
+		mxnet.BatchSize(batch),
 	)
 	if err != nil {
 		panic(err)

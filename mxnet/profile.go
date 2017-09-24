@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 	"time"
 	"unsafe"
 
@@ -32,7 +33,6 @@ type Profile struct {
 	Trace     *chrome.Trace
 	startTime time.Time
 	endTime   time.Time
-	initTime  time.Time
 	started   bool
 	stopped   bool
 	dumped    bool
@@ -74,7 +74,6 @@ func NewProfile(mode ProfileMode, tmpDir string) (*Profile, error) {
 	return &Profile{
 		Trace:    nil,
 		filename: filename,
-		initTime: initTime,
 		stopped:  false,
 		dumped:   false,
 	}, nil
@@ -189,11 +188,51 @@ func (p *Profile) Read() error {
 		p.Trace = nil
 		return errors.Wrapf(err, "failed to unmarshal %v", p.filename)
 	}
-	p.Trace.DisplayTimeUnit = "us"
-	p.Trace.InitTime = p.initTime
+	p.Trace.TimeUnit = "us"
 	p.Trace.StartTime = p.startTime
 	p.Trace.EndTime = p.endTime
+
+	p.process()
+
 	return nil
+}
+
+func (p *Profile) process() {
+
+	timeUnit := time.Microsecond
+
+	start := p.startTime
+
+	sort.Sort(p.Trace)
+
+	minTime := int64(0)
+	events := []*chrome.TraceEvent{}
+	for _, event := range p.Trace.TraceEvents {
+		if event == nil {
+			continue
+		}
+		if event.EventType != "B" && event.EventType != "E" {
+			continue
+		}
+		t := initTime.Add(time.Duration(event.Timestamp) * timeUnit)
+		if start.After(t) {
+			continue
+		}
+		events = append(events, event)
+		if event.EventType != "B" {
+			continue
+		}
+		if minTime != 0 && minTime < event.Timestamp {
+			continue
+		}
+		minTime = event.Timestamp
+	}
+
+	for _, event := range events {
+		event.Time = start.Add(time.Duration(event.Timestamp-minTime) * timeUnit)
+	}
+
+	p.Trace.TraceEvents = events
 }
 
 func (p *Profile) Delete() error {

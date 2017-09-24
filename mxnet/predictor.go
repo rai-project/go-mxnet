@@ -24,27 +24,14 @@ import "C"
 import (
 	"fmt"
 	"unsafe"
+
+	"github.com/pkg/errors"
 )
-
-const (
-	CPU_DEVICE = iota + 1 // cpu device type
-	GPU_DEVICE            // gpu device type
-)
-
-//TODO higher level api like context
-type Device struct {
-	Type int // device type
-	Id   int // device id
-}
-
-type InputNode struct {
-	Key   string   // name
-	Shape []uint32 // shape of ndarray
-}
 
 // predictor for inference
 type Predictor struct {
-	handle C.PredictorHandle // C handle of predictor
+	handle  C.PredictorHandle // C handle of predictor
+	options *Options
 }
 
 // Create a Predictor
@@ -53,17 +40,30 @@ type Predictor struct {
 // param params In-memory raw bytes of parameter ndarray file
 // param device Device to run predictor
 // param nodes An array of InputNode which stored the name and shape data of ndarray item
-func CreatePredictor(symbol []byte,
-	params []byte,
-	device Device,
-	nodes []InputNode,
-) (*Predictor, error) {
+func CreatePredictor(opts ...Option) (*Predictor, error) {
 
 	var (
 		pc        *C.char
 		shapeIdx  = []uint32{0}
 		shapeData = []uint32{}
 	)
+
+	options := NewOptions(opts...)
+
+	if len(options.symbol) == 0 {
+		return nil, errors.New("invalid empty symbol")
+	}
+	if len(options.weights) == 0 {
+		return nil, errors.New("invalid empty weights")
+	}
+	if len(options.inputNodes) == 0 {
+		return nil, errors.New("no input nodes found")
+	}
+
+	symbol := []byte(options.symbol)
+	params := []byte(options.weights)
+	device := options.device
+	nodes := options.inputNodes
 
 	// malloc a **char which like []string to store node keys
 	keys := C.malloc(C.size_t(len(nodes)) * C.size_t(unsafe.Sizeof(pc))) // c gc
@@ -72,13 +72,13 @@ func CreatePredictor(symbol []byte,
 		// get memory address
 		p := (**C.char)(unsafe.Pointer(uintptr(keys) + uintptr(i)*unsafe.Sizeof(pc)))
 		// c gc
-		*p = C.CString(nodes[i].Key)
+		*p = C.CString(nodes[i].key)
 
 		// shapeIdx for next node
-		shapeIdx = append(shapeIdx, uint32(j+len(nodes[i].Shape)))
-		j += len(nodes[i].Shape)
+		shapeIdx = append(shapeIdx, uint32(j+len(nodes[i].shape)))
+		j += len(nodes[i].shape)
 		// shape data for current node
-		shapeData = append(shapeData, nodes[i].Shape...)
+		shapeData = append(shapeData, nodes[i].shape...)
 	}
 
 	var handle C.PredictorHandle
@@ -86,8 +86,8 @@ func CreatePredictor(symbol []byte,
 	success, err := C.MXPredCreate((*C.char)(unsafe.Pointer(&symbol[0])),
 		unsafe.Pointer(&params[0]),
 		C.int(len(params)),
-		C.int(device.Type),
-		C.int(device.Id),
+		C.int(device.deviceType),
+		C.int(device.id),
 		C.mx_uint(len(nodes)),
 		(**C.char)(keys),
 		(*C.mx_uint)(unsafe.Pointer(&shapeIdx[0])),
@@ -108,7 +108,7 @@ func CreatePredictor(symbol []byte,
 	if success < 0 {
 		return nil, GetLastError()
 	}
-	return &Predictor{handle: handle}, nil
+	return &Predictor{handle: handle, options: options}, nil
 }
 
 // CreatePredictorPartial Creates a Predictor wich customized outputs [layer]
@@ -118,18 +118,34 @@ func CreatePredictor(symbol []byte,
 // param device Device to run predictor
 // param nodes An array of InputNode which stored the name and shape data of ndarray item
 // param outputKey the name of the output layer/key
-func CreatePredictorPartial(symbol []byte,
-	params []byte,
-	device Device,
-	nodes []InputNode,
-	outputKey string,
-) (*Predictor, error) {
+func CreatePredictorPartial(opts ...Option) (*Predictor, error) {
 
 	var (
 		pc        *C.char
 		shapeIdx  = []uint32{0}
 		shapeData = []uint32{}
 	)
+
+	options := NewOptions(opts...)
+
+	if len(options.symbol) == 0 {
+		return nil, errors.New("invalid empty symbol")
+	}
+	if len(options.weights) == 0 {
+		return nil, errors.New("invalid empty weights")
+	}
+	if len(options.inputNodes) == 0 {
+		return nil, errors.New("no input nodes found")
+	}
+	if options.outputNode == "" {
+		return nil, errors.New("invalid empty outputNode")
+	}
+
+	symbol := []byte(options.symbol)
+	params := []byte(options.weights)
+	device := options.device
+	nodes := options.inputNodes
+	outputKey := options.outputNode
 
 	// malloc a **char which like []string to store node keys
 	keys := C.malloc(C.size_t(len(nodes)) * C.size_t(unsafe.Sizeof(pc))) // c gc
@@ -138,13 +154,13 @@ func CreatePredictorPartial(symbol []byte,
 		// get memory address
 		p := (**C.char)(unsafe.Pointer(uintptr(keys) + uintptr(i)*unsafe.Sizeof(pc)))
 		// c gc
-		*p = C.CString(nodes[i].Key)
+		*p = C.CString(nodes[i].key)
 
 		// shapeIdx for next node
-		shapeIdx = append(shapeIdx, uint32(j+len(nodes[i].Shape)))
-		j += len(nodes[i].Shape)
+		shapeIdx = append(shapeIdx, uint32(j+len(nodes[i].shape)))
+		j += len(nodes[i].shape)
 		// shape data for current node
-		shapeData = append(shapeData, nodes[i].Shape...)
+		shapeData = append(shapeData, nodes[i].shape...)
 	}
 
 	oKeys := C.malloc(C.size_t(len(nodes)) * C.size_t(unsafe.Sizeof(pc)))
@@ -156,8 +172,8 @@ func CreatePredictorPartial(symbol []byte,
 	success, err := C.MXPredCreatePartialOut((*C.char)(unsafe.Pointer(&symbol[0])),
 		unsafe.Pointer(&params[0]),
 		C.int(len(params)),
-		C.int(device.Type),
-		C.int(device.Id),
+		C.int(device.deviceType),
+		C.int(device.id),
 		C.mx_uint(len(nodes)),
 		(**C.char)(keys),
 		(*C.mx_uint)(unsafe.Pointer(&shapeIdx[0])),
@@ -177,10 +193,10 @@ func CreatePredictorPartial(symbol []byte,
 	if err != nil {
 		return nil, err
 	}
-	if success < 0 {
+	if success != 0 {
 		return nil, GetLastError()
 	}
-	return &Predictor{handle: handle}, nil
+	return &Predictor{handle: handle, options: options}, nil
 }
 
 // set the input data of predictor
@@ -191,6 +207,28 @@ func (s *Predictor) SetInput(key string, data []float32) error {
 	// check input
 	if data == nil || len(data) < 1 {
 		return fmt.Errorf("intput data nil or empty")
+	}
+
+	batchSize := int64(s.options.batchSize)
+	if batchSize != 1 {
+		var shape []uint32
+		for _, inputNode := range s.options.inputNodes {
+			if inputNode.key == key {
+				if len(inputNode.shape) == 3 {
+					shape = inputNode.shape
+				} else {
+					shape = inputNode.shape[1:]
+				}
+			}
+		}
+		if len(shape) != 3 {
+			return errors.New("invalid input shape")
+		}
+		dataLen := int64(len(data))
+		shapeLen := int64(shape[0]) * int64(shape[1]) * int64(shape[2])
+		inputCount := dataLen / shapeLen
+		padding := make([]float32, (batchSize-inputCount)*3*224*224)
+		data = append(data, padding...)
 	}
 
 	// c gc
@@ -206,7 +244,8 @@ func (s *Predictor) SetInput(key string, data []float32) error {
 
 	if err != nil {
 		return err
-	} else if success < 0 {
+	}
+	if success != 0 {
 		return GetLastError()
 	}
 	return nil
@@ -218,7 +257,8 @@ func (s *Predictor) Forward() error {
 	success, err := C.MXPredForward(s.handle)
 	if err != nil {
 		return err
-	} else if success < 0 {
+	}
+	if success != 0 {
 		return GetLastError()
 	}
 	return nil
@@ -239,7 +279,8 @@ func (s *Predictor) GetOutputShape(index uint32) ([]uint32, error) {
 	)
 	if err != nil {
 		return nil, err
-	} else if success < 0 {
+	}
+	if success != 0 {
 		return nil, GetLastError()
 	}
 	// c array to go
@@ -267,7 +308,8 @@ func (s *Predictor) GetOutput(index uint32) ([]float32, error) {
 	)
 	if err != nil {
 		return nil, err
-	} else if success < 0 {
+	}
+	if success != 0 {
 		return nil, GetLastError()
 	}
 	return data, nil
@@ -279,7 +321,8 @@ func (s *Predictor) Free() error {
 	success, err := C.MXPredFree(s.handle)
 	if err != nil {
 		return err
-	} else if success < 0 {
+	}
+	if success != 0 {
 		return GetLastError()
 	}
 	return nil
