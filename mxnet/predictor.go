@@ -41,7 +41,6 @@ type Predictor struct {
 // param device Device to run predictor
 // param nodes An array of InputNode which stored the name and shape data of ndarray item
 func CreatePredictor(opts ...Option) (*Predictor, error) {
-
 	var (
 		pc        *C.char
 		shapeIdx  = []uint32{0}
@@ -119,7 +118,6 @@ func CreatePredictor(opts ...Option) (*Predictor, error) {
 // param nodes An array of InputNode which stored the name and shape data of ndarray item
 // param outputKey the name of the output layer/key
 func CreatePredictorPartial(opts ...Option) (*Predictor, error) {
-
 	var (
 		pc        *C.char
 		shapeIdx  = []uint32{0}
@@ -227,11 +225,10 @@ func (s *Predictor) SetInput(key string, data []float32) error {
 		dataLen := int64(len(data))
 		shapeLen := int64(shape[0]) * int64(shape[1]) * int64(shape[2])
 		inputCount := dataLen / shapeLen
-		padding := make([]float32, (batchSize-inputCount)*3*224*224)
+		padding := make([]float32, (batchSize-inputCount)*shapeLen)
 		data = append(data, padding...)
 	}
 
-	// c gc
 	k := C.CString(key)
 	// free mem before return
 	defer C.free(unsafe.Pointer(k))
