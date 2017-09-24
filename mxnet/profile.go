@@ -206,11 +206,8 @@ func (p *Profile) process() {
 	sort.Sort(p.Trace)
 
 	minTime := int64(0)
-	events := []*chrome.TraceEvent{}
+	events := []chrome.TraceEvent{}
 	for _, event := range p.Trace.TraceEvents {
-		if event == nil {
-			continue
-		}
 		if event.EventType != "B" && event.EventType != "E" {
 			continue
 		}
@@ -228,8 +225,8 @@ func (p *Profile) process() {
 		minTime = event.Timestamp
 	}
 
-	for _, event := range events {
-		event.Time = start.Add(time.Duration(event.Timestamp-minTime) * timeUnit)
+	for ii, event := range events {
+		events[ii].Time = start.Add(time.Duration(event.Timestamp-minTime) * timeUnit)
 	}
 
 	p.Trace.TraceEvents = events
