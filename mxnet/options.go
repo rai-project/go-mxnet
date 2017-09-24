@@ -20,7 +20,7 @@ func Context(c context.Context) Option {
 	}
 }
 
-func BatchSize(n int) Option {
+func BatchSize(n uint32) Option {
 	return func(o *Options) {
 		o.batchSize = uint32(n)
 	}

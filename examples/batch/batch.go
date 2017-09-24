@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	batch        = 10
+	batch        = uint32(10)
 	graph_url    = "http://data.dmlc.ml/models/imagenet/squeezenet/squeezenet_v1.0-symbol.json"
 	weights_url  = "http://data.dmlc.ml/models/imagenet/squeezenet/squeezenet_v1.0-0000.params"
 	features_url = "http://data.dmlc.ml/mxnet/models/imagenet/synset.txt"
