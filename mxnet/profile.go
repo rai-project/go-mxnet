@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 	"unsafe"
 
@@ -226,6 +227,7 @@ func (p *Profile) process() {
 	}
 
 	for ii, event := range events {
+		events[ii].Name = strings.Trim(strings.Trim(event.Name, "["), "]")
 		events[ii].Time = start.Add(time.Duration(event.Timestamp-minTime) * timeUnit)
 	}
 
@@ -240,11 +242,11 @@ func (p *Profile) Delete() error {
 	return os.Remove(p.filename)
 }
 
-func (p *Profile) Publish(ctx context.Context, operationName string, opts ...opentracing.StartSpanOption) (opentracing.Span, context.Context, error) {
+func (p *Profile) Publish(ctx context.Context, operationName string, opts ...opentracing.StartSpanOption) error {
 	if err := p.Read(); err != nil {
-		return nil, nil, err
+		return err
 	}
-	return p.Trace.Publish(ctx, operationName, opts...)
+	return p.Trace.Publish(ctx, tracer, opts...)
 }
 
 func init() {
