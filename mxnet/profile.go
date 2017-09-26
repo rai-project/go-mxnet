@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 	"time"
 	"unsafe"
@@ -203,8 +202,6 @@ func (p *Profile) process() {
 	timeUnit := time.Microsecond
 
 	start := p.startTime
-
-	sort.Sort(p.Trace)
 
 	minTime := int64(0)
 	events := []chrome.TraceEvent{}
