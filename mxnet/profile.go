@@ -27,7 +27,7 @@ typedef struct MXCallbackList MXCallbackList;
 */
 import "C"
 
-var initTime time.Time
+var initTime = time.Now()
 
 type Profile struct {
 	Trace     *chrome.Trace
@@ -244,8 +244,4 @@ func (p *Profile) Publish(ctx context.Context, operationName string, opts ...ope
 		return err
 	}
 	return p.Trace.Publish(ctx, tracer, opts...)
-}
-
-func init() {
-	initTime = time.Now()
 }
