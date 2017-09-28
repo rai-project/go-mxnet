@@ -15,8 +15,6 @@
 package mxnet
 
 /*
-// go preamble
-#cgo pkg-config: mxnet
 #include <mxnet/c_predict_api.h>
 #include <stdlib.h>
 */

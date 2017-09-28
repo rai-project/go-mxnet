@@ -20,7 +20,6 @@ import (
 
 /*
 // go preamble
-#cgo pkg-config: mxnet
 typedef struct MXCallbackList MXCallbackList;
 #include <mxnet/c_api.h>
 #include <stdlib.h>
