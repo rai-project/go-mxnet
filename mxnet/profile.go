@@ -13,6 +13,7 @@ import (
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
 	"github.com/rai-project/config"
+	tr "github.com/rai-project/tracer"
 	"github.com/rai-project/tracer/chrome"
 	"golang.org/x/net/context"
 )
@@ -239,7 +240,7 @@ func (p *Profile) Delete() error {
 	return os.Remove(p.filename)
 }
 
-func (p *Profile) Publish(ctx context.Context, operationName string, opts ...opentracing.StartSpanOption) error {
+func (p *Profile) Publish(ctx context.Context, tracer tr.Tracer, opts ...opentracing.StartSpanOption) error {
 	if err := p.Read(); err != nil {
 		return err
 	}
