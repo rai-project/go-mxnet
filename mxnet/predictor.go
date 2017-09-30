@@ -81,7 +81,7 @@ func CreatePredictor(opts ...Option) (*Predictor, error) {
 
 	var handle C.PredictorHandle
 
-	success, err := C.MXPredCreate((*C.char)(unsafe.Pointer(&symbol[0])),
+	err := C.MXPredCreate((*C.char)(unsafe.Pointer(&symbol[0])),
 		unsafe.Pointer(&params[0]),
 		C.int(len(params)),
 		C.int(device.deviceType),
@@ -100,10 +100,7 @@ func CreatePredictor(opts ...Option) (*Predictor, error) {
 	}
 	C.free(unsafe.Pointer(keys))
 
-	if err != nil {
-		return nil, err
-	}
-	if success < 0 {
+	if err != 0 {
 		return nil, GetLastError()
 	}
 	return &Predictor{handle: handle, options: options}, nil
@@ -166,7 +163,7 @@ func CreatePredictorPartial(opts ...Option) (*Predictor, error) {
 
 	var handle C.PredictorHandle
 
-	success, err := C.MXPredCreatePartialOut((*C.char)(unsafe.Pointer(&symbol[0])),
+	success := C.MXPredCreatePartialOut((*C.char)(unsafe.Pointer(&symbol[0])),
 		unsafe.Pointer(&params[0]),
 		C.int(len(params)),
 		C.int(device.deviceType),
@@ -187,9 +184,6 @@ func CreatePredictorPartial(opts ...Option) (*Predictor, error) {
 	}
 	C.free(unsafe.Pointer(keys))
 
-	if err != nil {
-		return nil, err
-	}
 	if success != 0 {
 		return nil, GetLastError()
 	}
@@ -232,15 +226,12 @@ func (s *Predictor) SetInput(key string, data []float32) error {
 	// free mem before return
 	defer C.free(unsafe.Pointer(k))
 
-	success, err := C.MXPredSetInput(s.handle,
+	success := C.MXPredSetInput(s.handle,
 		k,
 		(*C.mx_float)(unsafe.Pointer(&data[0])),
 		C.mx_uint(len(data)),
 	)
 
-	if err != nil {
-		return err
-	}
 	if success != 0 {
 		return GetLastError()
 	}
@@ -250,10 +241,7 @@ func (s *Predictor) SetInput(key string, data []float32) error {
 // run a forward pass after SetInput
 // go binding for MXPredForward
 func (s *Predictor) Forward() error {
-	success, err := C.MXPredForward(s.handle)
-	if err != nil {
-		return err
-	}
+	success := C.MXPredForward(s.handle)
 	if success != 0 {
 		return GetLastError()
 	}
@@ -268,14 +256,11 @@ func (s *Predictor) GetOutputShape(index uint32) ([]uint32, error) {
 		shapeData *C.mx_uint
 		shapeDim  C.mx_uint
 	)
-	success, err := C.MXPredGetOutputShape(s.handle,
+	success := C.MXPredGetOutputShape(s.handle,
 		C.mx_uint(index),
 		&shapeData,
 		&shapeDim,
 	)
-	if err != nil {
-		return nil, err
-	}
 	if success != 0 {
 		return nil, GetLastError()
 	}
@@ -297,14 +282,11 @@ func (s *Predictor) GetOutput(index uint32) ([]float32, error) {
 		size *= v
 	}
 	data := make([]float32, size)
-	success, err := C.MXPredGetOutput(s.handle,
+	success := C.MXPredGetOutput(s.handle,
 		C.mx_uint(index),
 		(*C.mx_float)(unsafe.Pointer(&data[0])),
 		C.mx_uint(size),
 	)
-	if err != nil {
-		return nil, err
-	}
 	if success != 0 {
 		return nil, GetLastError()
 	}
@@ -314,10 +296,7 @@ func (s *Predictor) GetOutput(index uint32) ([]float32, error) {
 // free this predictor's C handle
 // go binding for MXPredFree
 func (s *Predictor) Free() error {
-	success, err := C.MXPredFree(s.handle)
-	if err != nil {
-		return err
-	}
+	success:= C.MXPredFree(s.handle)
 	if success != 0 {
 		return GetLastError()
 	}

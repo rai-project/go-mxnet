@@ -67,8 +67,10 @@ func main() {
 		mxnet.Symbol(symbol),
 		mxnet.Weights(params),
 		mxnet.InputNode("data", []uint32{3, 224, 224}),
+		mxnet.Device(2, 1),
 	)
 	if err != nil {
+		pp.Println(mxnet.GetLastError())
 		panic(err)
 	}
 	defer p.Free()
