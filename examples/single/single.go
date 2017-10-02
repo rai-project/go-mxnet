@@ -97,6 +97,15 @@ func main() {
 		panic(err)
 	}
 
+	if profile, err := mxnet.NewProfile(mxnet.ProfileAllOperators, ""); err == nil {
+		profile.Start()
+		defer func() {
+			profile.Stop()
+			profile.Publish(ctx, tracer)
+			profile.Delete()
+		}()
+	}
+
 	// do predict
 	if err := p.Forward(); err != nil {
 		panic(err)
