@@ -30,6 +30,8 @@ RUN cd /usr/src/gtest && \
 WORKDIR /
 RUN git clone --single-branch --depth 1 --branch $FRAMEWORK_VERSION --recursive https://github.com/apache/incubator-mxnet mxnet
 
+ENV MXNET_ROOT_DIR $FRAMEWORKS_DIR/mxnet
+
 RUN cd mxnet && \
   cp make/config.mk . && \
   echo "USE_BLAS=openblas" >>config.mk && \
@@ -39,12 +41,12 @@ RUN cd mxnet && \
   echo "USE_CUDA_PATH=/usr/local/cuda" >>config.mk && \
   echo "USE_CUDNN=1" >>config.mk && \
   echo "USE_PROFILER=1" >>config.mk && \
-  make ADD_LDFLAGS=-L/usr/local/cuda/lib64/stubs && \
+  echo "USE_PYTHON=1" >>config.mk && \
+  make ADD_LDFLAGS=-L/usr/local/cuda/lib64/stubs PREFIX=$MXNET_ROOT&& \
   rm -r build
 
 RUN ln -s /mxnet/lib/libmxnet.so /usr/lib/libmxnet.so
-ENV LD_LIBRARY_PATH /usr/local/cuda/lib64:$LD_LIBRARY_PATH
-ENV LD_LIBRARY_PATH /mxnet/lib:$LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH $FRAMEWORKS_DIR/mxnet/lib:$LD_LIBRARY_PATH
 
 # Get Go bindings
 ENV PKG github.com/rai-project/go-mxnet-predictor

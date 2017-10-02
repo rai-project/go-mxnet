@@ -1,6 +1,9 @@
 package mxnet
 
-import context "golang.org/x/net/context"
+import (
+	nvidiasmi "github.com/rai-project/nvidia-smi"
+	context "golang.org/x/net/context"
+)
 
 type Options struct {
 	ctx        context.Context
@@ -63,10 +66,14 @@ func OutputNode(output string) Option {
 }
 
 func NewOptions(opts ...Option) *Options {
+	device := device{deviceType: CPU_DEVICE, id: 0}
+	if nvidiasmi.HasGPU {
+		device.deviceType = GPU_DEVICE
+	}
 	options := &Options{
 		ctx:       context.Background(),
 		batchSize: 1,
-		device:    device{deviceType: CPU_DEVICE, id: 0},
+		device:    device,
 	}
 
 	for _, o := range opts {
