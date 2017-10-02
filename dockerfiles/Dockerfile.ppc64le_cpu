@@ -37,8 +37,13 @@ RUN cd mxnet && \
   echo "ADD_CFLAGS=-I/usr/include/openblas -Wno-strict-aliasing -Wno-sign-compare -ftrack-macro-expansion=0 -Wno-misleading-indentation" >>config.mk && \
   echo "USE_CUDA=0" >>config.mk && \
   echo "USE_PROFILER=1" >>config.mk && \
-  make && \
+  echo "USE_PYTHON=1" >>config.mk && \
+  make -j$(nproc) ADD_LDFLAGS=-L/usr/local/cuda/lib64/stubs PREFIX=$MXNET_ROOT&& \
+  cp -r include $MXNET_ROOT_DIR/ && \
+  cp -r lib $MXNET_ROOT_DIR/ && \
   rm -r build
+
+ENV LD_LIBRARY_PATH $FRAMEWORKS_DIR/mxnet/lib:$LD_LIBRARY_PATH
 
 RUN ln -s /mxnet/lib/libmxnet.so /usr/lib/libmxnet.so
 ENV LD_LIBRARY_PATH /usr/local/cuda/lib64:$LD_LIBRARY_PATH
@@ -49,9 +54,6 @@ ENV PKG github.com/rai-project/go-mxnet-predictor
 WORKDIR $GOPATH/src/$PKG
 
 RUN git clone --depth=1 --branch=master https://${PKG}.git . && \
-  sed -i "/prefix=/c prefix=\/mxnet" $GOPATH/src/github.com/rai-project/go-mxnet-predictor/travis/mxnet.pc && \
-  cp $GOPATH/src/github.com/rai-project/go-mxnet-predictor/travis/mxnet.pc /usr/lib/pkgconfig && \
-  pkg-config --libs mxnet && \
   cd $GOPATH/src/$PKG && \
   glide install && \
   rm -fr vendor/github.com/Sirupsen && \
