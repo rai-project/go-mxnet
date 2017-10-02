@@ -2,19 +2,22 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
 
-	"github.com/k0kubun/pp"
-
 	"github.com/anthonynsimon/bild/imgio"
 	"github.com/anthonynsimon/bild/transform"
+	"github.com/apex/log"
+	"github.com/k0kubun/pp"
 	"github.com/rai-project/config"
 	"github.com/rai-project/downloadmanager"
+	"github.com/rai-project/go-cupti"
 	"github.com/rai-project/go-mxnet-predictor/mxnet"
 	"github.com/rai-project/go-mxnet-predictor/utils"
+	tr "github.com/rai-project/tracer"
 )
 
 var (
@@ -61,6 +64,20 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	ctx := context.Background()
+	tracer := tr.MustNew("single")
+	defer tr.Close()
+
+	span, ctx := tracer.StartSpanFromContext(ctx, "cupti")
+	defer span.Finish()
+
+	cupti, err := cupti.New(cupti.Context(ctx), cupti.Tracer(tracer))
+	if err != nil {
+		log.WithError(err).Error("failed to create new cupti context")
+		os.Exit(-1)
+	}
+	defer cupti.Close()
 
 	// create predictor
 	p, err := mxnet.CreatePredictor(
