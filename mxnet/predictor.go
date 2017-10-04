@@ -300,10 +300,6 @@ func (s *Predictor) GetOutput(index uint32) ([]float32, error) {
 	return data, nil
 }
 
-func (s *Predictor) Options() *options.Options {
-	return s.options
-}
-
 // free this predictor's C handle
 // go binding for MXPredFree
 func (s *Predictor) Close() error {
