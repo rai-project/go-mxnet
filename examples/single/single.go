@@ -65,9 +65,9 @@ func main() {
 		panic(err)
 	}
 
-	ctx := context.Background()
-	tracer := tr.MustNew("single")
-	defer tr.Close()
+  ctx := context.Background()
+
+	defer tracer.Close()
 
 	span, ctx := tracer.StartSpanFromContext(ctx, "cupti")
 	defer span.Finish()
