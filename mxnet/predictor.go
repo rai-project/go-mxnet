@@ -190,6 +190,7 @@ func CreatePredictorPartial(opts ...options.Option) (*Predictor, error) {
 		C.free(unsafe.Pointer(*p))
 	}
 	C.free(unsafe.Pointer(keys))
+	C.free(unsafe.Pointer(oKeys))
 
 	if success != 0 {
 		return nil, GetLastError()

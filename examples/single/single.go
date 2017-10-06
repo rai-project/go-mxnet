@@ -17,7 +17,7 @@ import (
 	"github.com/rai-project/go-cupti"
 	"github.com/rai-project/go-mxnet-predictor/mxnet"
 	"github.com/rai-project/go-mxnet-predictor/utils"
-	tr "github.com/rai-project/tracer"
+	"github.com/rai-project/tracer"
 )
 
 var (
@@ -65,7 +65,7 @@ func main() {
 		panic(err)
 	}
 
-  ctx := context.Background()
+	ctx := context.Background()
 
 	defer tracer.Close()
 
