@@ -24,8 +24,11 @@ import (
 	"fmt"
 	"unsafe"
 
+	"github.com/k0kubun/pp"
+
 	"github.com/pkg/errors"
 	"github.com/rai-project/dlframework/framework/options"
+	nvidiasmi "github.com/rai-project/nvidia-smi"
 )
 
 // predictor for inference
@@ -60,6 +63,12 @@ func CreatePredictor(opts ...options.Option) (*Predictor, error) {
 	}
 	if len(options.Devices()) == 0 {
 		return nil, errors.New("no devices defined")
+	}
+
+	pp.Println("do i have gpu?", nvidiasmi.HasGPU)
+
+	if options.UsesGPU() && !nvidiasmi.HasGPU {
+		return nil, errors.New("no GPU device")
 	}
 
 	symbol := options.Symbol()
