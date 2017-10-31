@@ -10,11 +10,10 @@ import (
 
 	"github.com/anthonynsimon/bild/imgio"
 	"github.com/anthonynsimon/bild/transform"
-	"github.com/apex/log"
 	"github.com/k0kubun/pp"
 	"github.com/rai-project/config"
+	"github.com/rai-project/dlframework/framework/options"
 	"github.com/rai-project/downloadmanager"
-	"github.com/rai-project/go-cupti"
 	"github.com/rai-project/go-mxnet-predictor/mxnet"
 	"github.com/rai-project/go-mxnet-predictor/utils"
 	"github.com/rai-project/tracer"
@@ -69,28 +68,23 @@ func main() {
 
 	defer tracer.Close()
 
-	span, ctx := tracer.StartSpanFromContext(ctx, "cupti")
+	span, ctx := tracer.StartSpanFromContext(ctx, tracer.NO_TRACE, "cupti")
 	defer span.Finish()
 
-	cupti, err := cupti.New(cupti.Context(ctx), cupti.Tracer(tracer))
-	if err != nil {
-		log.WithError(err).Error("failed to create new cupti context")
-		os.Exit(-1)
-	}
-	defer cupti.Close()
-
+	opts := options.New()
+	inputDims := []uint32{3, 224, 224}
 	// create predictor
 	p, err := mxnet.CreatePredictor(
-		mxnet.Symbol(symbol),
-		mxnet.Weights(params),
-		mxnet.InputNode("data", []uint32{3, 224, 224}),
-		mxnet.Device(2, 1),
+		options.WithOptions(opts),
+		options.Symbol(symbol),
+		options.Weights(params),
+		options.InputNode("data", inputDims),
 	)
 	if err != nil {
 		pp.Println(mxnet.GetLastError())
 		panic(err)
 	}
-	defer p.Free()
+	defer p.Close()
 
 	// set input
 	if err := p.SetInput("data", res); err != nil {
@@ -101,7 +95,7 @@ func main() {
 		profile.Start()
 		defer func() {
 			profile.Stop()
-			profile.Publish(ctx, tracer)
+			profile.Publish(ctx)
 			profile.Delete()
 		}()
 	}

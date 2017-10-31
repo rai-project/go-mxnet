@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"sort"
 
+	"github.com/rai-project/dlframework/framework/options"
+
 	"github.com/k0kubun/pp"
 	"github.com/rai-project/go-mxnet-predictor/mxnet"
 
@@ -78,17 +80,21 @@ func main() {
 		panic(err)
 	}
 
+	opts := options.New()
+	inputDims := []uint32{3, 224, 224}
 	// create predictor
 	p, err := mxnet.CreatePredictor(
-		mxnet.Symbol(symbol),
-		mxnet.Weights(params),
-		mxnet.InputNode("data", []uint32{3, 224, 224}),
-		mxnet.BatchSize(uint32(batch)),
+		options.WithOptions(opts),
+		options.Symbol(symbol),
+		options.Weights(params),
+		options.InputNode("data", inputDims),
+		options.BatchSize(uint32(batch)),
 	)
+
 	if err != nil {
 		panic(err)
 	}
-	defer p.Free()
+	defer p.Close()
 
 	// set input
 	if err := p.SetInput("data", input); err != nil {
