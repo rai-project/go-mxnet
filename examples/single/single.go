@@ -17,6 +17,10 @@ import (
 	"github.com/rai-project/go-mxnet-predictor/mxnet"
 	"github.com/rai-project/go-mxnet-predictor/utils"
 	"github.com/rai-project/tracer"
+
+	_ "github.com/rai-project/tracer/jaeger"
+	_ "github.com/rai-project/tracer/noop"
+	_ "github.com/rai-project/tracer/zipkin"
 )
 
 var (
@@ -69,6 +73,7 @@ func main() {
 	defer tracer.Close()
 
 	span, ctx := tracer.StartSpanFromContext(ctx, tracer.NO_TRACE, "cupti")
+	// pp.Println("span = ", span)
 	defer span.Finish()
 
 	opts := options.New()
