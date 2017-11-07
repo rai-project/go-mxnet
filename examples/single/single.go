@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"context"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -16,11 +15,8 @@ import (
 	"github.com/rai-project/downloadmanager"
 	"github.com/rai-project/go-mxnet-predictor/mxnet"
 	"github.com/rai-project/go-mxnet-predictor/utils"
-	"github.com/rai-project/tracer"
-
-	_ "github.com/rai-project/tracer/jaeger"
-	_ "github.com/rai-project/tracer/noop"
-	_ "github.com/rai-project/tracer/zipkin"
+	nvidiasmi "github.com/rai-project/nvidia-smi"
+	_ "github.com/rai-project/tracer/all"
 )
 
 var (
@@ -42,6 +38,7 @@ func main() {
 	if _, err := downloadmanager.DownloadInto(weights_url, dir); err != nil {
 		os.Exit(-1)
 	}
+
 	if _, err := downloadmanager.DownloadInto(features_url, dir); err != nil {
 		os.Exit(-1)
 	}
@@ -68,19 +65,24 @@ func main() {
 		panic(err)
 	}
 
-	ctx := context.Background()
-
-	defer tracer.Close()
-
-	span, ctx := tracer.StartSpanFromContext(ctx, tracer.NO_TRACE, "cupti")
-	// pp.Println("span = ", span)
-	defer span.Finish()
+	// ctx := context.Background()
+	// span, ctx := tracer.StartSpanFromContext(ctx, tracer.NO_TRACE, "single")
+	// defer span.Finish()
 
 	opts := options.New()
 	inputDims := []uint32{3, 224, 224}
+
+	device := options.CPU_DEVICE
+	if nvidiasmi.HasGPU {
+		device = options.CUDA_DEVICE
+	}
+
+	pp.Println("Using device = ", device)
+
 	// create predictor
 	p, err := mxnet.CreatePredictor(
 		options.WithOptions(opts),
+		options.Device(device, 0),
 		options.Symbol(symbol),
 		options.Weights(params),
 		options.InputNode("data", inputDims),
@@ -100,7 +102,7 @@ func main() {
 		profile.Start()
 		defer func() {
 			profile.Stop()
-			profile.Publish(ctx)
+			// profile.Publish(ctx)
 			profile.Delete()
 		}()
 	}

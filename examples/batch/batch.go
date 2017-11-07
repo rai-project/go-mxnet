@@ -8,6 +8,7 @@ import (
 	"sort"
 
 	"github.com/rai-project/dlframework/framework/options"
+	nvidiasmi "github.com/rai-project/nvidia-smi"
 
 	"github.com/k0kubun/pp"
 	"github.com/rai-project/go-mxnet-predictor/mxnet"
@@ -43,6 +44,7 @@ func main() {
 	if _, err := downloadmanager.DownloadInto(weights_url, dir); err != nil {
 		os.Exit(-1)
 	}
+
 	if _, err := downloadmanager.DownloadInto(features_url, dir); err != nil {
 		os.Exit(-1)
 	}
@@ -86,9 +88,18 @@ func main() {
 
 	opts := options.New()
 	inputDims := []uint32{3, 224, 224}
+
+	device := options.CPU_DEVICE
+	if nvidiasmi.HasGPU {
+		device = options.CUDA_DEVICE
+	}
+
+	pp.Println("Using device = ", device)
+
 	// create predictor
 	p, err := mxnet.CreatePredictor(
 		options.WithOptions(opts),
+		options.Device(device, 0),
 		options.Symbol(symbol),
 		options.Weights(params),
 		options.InputNode("data", inputDims),
