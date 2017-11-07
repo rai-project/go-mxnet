@@ -31,6 +31,11 @@ func main() {
 	weights := filepath.Join(dir, "squeezenet_v1.0-0000.params")
 	features := filepath.Join(dir, "synset.txt")
 
+	// defer tracer.Close()
+
+	// span, ctx := tracer.StartSpanFromContext(context.Background(), tracer.FULL_TRACE, "mxnet_single")
+	// defer span.Finish()
+
 	if _, err := downloadmanager.DownloadInto(graph_url, dir); err != nil {
 		os.Exit(-1)
 	}
@@ -65,10 +70,6 @@ func main() {
 		panic(err)
 	}
 
-	// ctx := context.Background()
-	// span, ctx := tracer.StartSpanFromContext(ctx, tracer.NO_TRACE, "single")
-	// defer span.Finish()
-
 	opts := options.New()
 	inputDims := []uint32{3, 224, 224}
 
@@ -76,7 +77,6 @@ func main() {
 	if nvidiasmi.HasGPU {
 		device = options.CUDA_DEVICE
 	}
-
 	pp.Println("Using device = ", device)
 
 	// create predictor
@@ -98,14 +98,14 @@ func main() {
 		panic(err)
 	}
 
-	if profile, err := mxnet.NewProfile(mxnet.ProfileAllOperators, ""); err == nil {
-		profile.Start()
-		defer func() {
-			profile.Stop()
-			// profile.Publish(ctx)
-			profile.Delete()
-		}()
-	}
+	// if profile, err := mxnet.NewProfile(mxnet.ProfileAllOperators, ""); err == nil {
+	// 	profile.Start()
+	// 	defer func() {
+	// 		profile.Stop()
+	// 		 profile.Publish(ctx)
+	// 		profile.Delete()
+	// 	}()
+	// }
 
 	// do predict
 	if err := p.Forward(); err != nil {

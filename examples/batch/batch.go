@@ -18,10 +18,6 @@ import (
 	"github.com/rai-project/config"
 	"github.com/rai-project/downloadmanager"
 	"github.com/rai-project/go-mxnet-predictor/utils"
-
-	_ "github.com/rai-project/tracer/jaeger"
-	_ "github.com/rai-project/tracer/noop"
-	_ "github.com/rai-project/tracer/zipkin"
 )
 
 var (
@@ -93,7 +89,6 @@ func main() {
 	if nvidiasmi.HasGPU {
 		device = options.CUDA_DEVICE
 	}
-
 	pp.Println("Using device = ", device)
 
 	// create predictor
