@@ -14,5 +14,5 @@ type DeviceType int
 
 const (
 	CPU_DEVICE DeviceType = iota + 1 // cpu device type
-	GPU_Device                       // gpu device type
+	GPU_DEVICE                       // gpu device type
 )
