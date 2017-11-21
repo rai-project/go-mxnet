@@ -2,11 +2,13 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
 
+	sourcepath "github.com/GeertJohan/go-sourcepath"
 	"github.com/anthonynsimon/bild/imgio"
 	"github.com/anthonynsimon/bild/transform"
 	"github.com/k0kubun/pp"
@@ -16,6 +18,7 @@ import (
 	"github.com/rai-project/go-mxnet-predictor/mxnet"
 	"github.com/rai-project/go-mxnet-predictor/utils"
 	nvidiasmi "github.com/rai-project/nvidia-smi"
+	"github.com/rai-project/tracer"
 	_ "github.com/rai-project/tracer/all"
 )
 
@@ -31,10 +34,9 @@ func main() {
 	weights := filepath.Join(dir, "squeezenet_v1.0-0000.params")
 	features := filepath.Join(dir, "synset.txt")
 
-	// defer tracer.Close()
-
-	// span, ctx := tracer.StartSpanFromContext(context.Background(), tracer.FULL_TRACE, "mxnet_single")
-	// defer span.Finish()
+	defer func() {
+		tracer.Close()
+	}()
 
 	if _, err := downloadmanager.DownloadInto(graph_url, dir); err != nil {
 		os.Exit(-1)
@@ -59,7 +61,7 @@ func main() {
 	}
 
 	// load test image for predction
-	img, err := imgio.Open("../_fixtures/platypus.jpg")
+	img, err := imgio.Open(filepath.Join(sourcepath.MustAbsoluteDir(), "..", "_fixtures", "platypus.jpg"))
 	if err != nil {
 		panic(err)
 	}
@@ -70,7 +72,6 @@ func main() {
 		panic(err)
 	}
 
-	opts := options.New()
 	inputDims := []uint32{3, 224, 224}
 
 	device := options.CPU_DEVICE
@@ -79,13 +80,22 @@ func main() {
 	}
 	pp.Println("Using device = ", device)
 
-	// create predictor
-	p, err := mxnet.CreatePredictor(
-		options.WithOptions(opts),
+	span, ctx := tracer.StartSpanFromContext(context.Background(), tracer.FULL_TRACE, "mxnet_single")
+	defer func() {
+		span.Finish()
+	}()
+
+	opts := options.New(
+		options.Context(ctx),
 		options.Device(device, 0),
 		options.Symbol(symbol),
 		options.Weights(params),
 		options.InputNode("data", inputDims),
+	)
+
+	// create predictor
+	p, err := mxnet.CreatePredictor(
+		options.WithOptions(opts),
 	)
 	if err != nil {
 		pp.Println(mxnet.GetLastError())
@@ -98,14 +108,26 @@ func main() {
 		panic(err)
 	}
 
-	// if profile, err := mxnet.NewProfile(mxnet.ProfileAllOperators, ""); err == nil {
-	// 	profile.Start()
-	// 	defer func() {
-	// 		profile.Stop()
-	// 		 profile.Publish(ctx)
-	// 		profile.Delete()
-	// 	}()
+	// if nvidiasmi.HasGPU {
+	// 	cu, err := cupti.New(cupti.Context(ctx))
+	// 	if err == nil {
+	// 		defer func() {
+	// 			cu.Wait()
+	// 			cu.Close()
+	// 		}()
+	// 	}
 	// }
+
+	if profile, err := mxnet.NewProfile(mxnet.ProfileAllOperators, ""); err == nil {
+		profile.Start()
+
+		defer func() {
+			profile.Stop()
+
+			profile.Publish(ctx)
+			profile.Delete()
+		}()
+	}
 
 	// do predict
 	if err := p.Forward(); err != nil {
