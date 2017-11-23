@@ -15,6 +15,7 @@ import (
 	"github.com/rai-project/config"
 	"github.com/rai-project/dlframework/framework/options"
 	"github.com/rai-project/downloadmanager"
+	cupti "github.com/rai-project/go-cupti"
 	"github.com/rai-project/go-mxnet-predictor/mxnet"
 	"github.com/rai-project/go-mxnet-predictor/utils"
 	nvidiasmi "github.com/rai-project/nvidia-smi"
@@ -108,15 +109,15 @@ func main() {
 		panic(err)
 	}
 
-	// if nvidiasmi.HasGPU {
-	// 	cu, err := cupti.New(cupti.Context(ctx))
-	// 	if err == nil {
-	// 		defer func() {
-	// 			cu.Wait()
-	// 			cu.Close()
-	// 		}()
-	// 	}
-	// }
+	if nvidiasmi.HasGPU {
+		cu, err := cupti.New(cupti.Context(ctx))
+		if err == nil {
+			defer func() {
+				cu.Wait()
+				cu.Close()
+			}()
+		}
+	}
 
 	if profile, err := mxnet.NewProfile(mxnet.ProfileAllOperators, ""); err == nil {
 		profile.Start()
