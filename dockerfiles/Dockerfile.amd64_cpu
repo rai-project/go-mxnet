@@ -31,6 +31,7 @@ WORKDIR /
 RUN git clone --single-branch --depth 1 --branch $FRAMEWORK_VERSION --recursive https://github.com/apache/incubator-mxnet mxnet
 
 RUN cd mxnet && \
+  mkdir -p /opt/frameworks/mxnet &&  \
   cp make/config.mk . && \
   echo "USE_BLAS=openblas" >>config.mk && \
   echo "USE_CUDA=0" >>config.mk && \

@@ -33,6 +33,7 @@ RUN git clone --single-branch --depth 1 --branch $FRAMEWORK_VERSION --recursive 
 ENV MXNET_ROOT_DIR $FRAMEWORKS_DIR/mxnet
 
 RUN cd mxnet && \
+  mkdir -p /opt/frameworks/mxnet &&  \
   cp make/config.mk . && \
   echo "USE_BLAS=openblas" >>config.mk && \
   echo "USE_OPENCV=0" >>config.mk && \
