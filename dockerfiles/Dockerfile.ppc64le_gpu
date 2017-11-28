@@ -42,14 +42,15 @@ RUN cd mxnet && \
   echo "USE_CUDNN=1" >>config.mk && \
   echo "USE_PROFILER=1" >>config.mk && \
   echo "USE_PYTHON=1" >>config.mk && \
-  make -j$(nproc) ADD_LDFLAGS=-L/usr/local/cuda/lib64/stubs PREFIX=$MXNET_ROOT&& \
-  cp -r include $MXNET_ROOT_DIR/ && \
-  cp -r lib $MXNET_ROOT_DIR/ && \
+  make ADD_LDFLAGS=-L/usr/local/cuda/lib64/stubs PREFIX=/opt/frameworks/mxnet &&  \
+  cp -r include /opt/frameworks/mxnet/ && \
+  cp -r lib /opt/frameworks/mxnet/ && \
   rm -r build
 
 RUN ln -s /opt/frameworks/mxnet/lib/libmxnet.so /usr/lib/libmxnet.so
 ENV LD_LIBRARY_PATH /usr/local/cuda/lib64:$LD_LIBRARY_PATH
 ENV LD_LIBRARY_PATH /opt/frameworks/mxnet/lib:$LD_LIBRARY_PATH
+ENV LIBRARY_PATH /opt/frameworks/mxnet/lib:$LIBRARY_PATH
 
 # Get Go bindings
 ENV PKG github.com/rai-project/go-mxnet-predictor
