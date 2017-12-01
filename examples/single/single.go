@@ -82,9 +82,7 @@ func main() {
 	pp.Println("Using device = ", device)
 
 	span, ctx := tracer.StartSpanFromContext(context.Background(), tracer.FULL_TRACE, "mxnet_single")
-	defer func() {
-		span.Finish()
-	}()
+	defer span.Finish()
 
 	opts := options.New(
 		options.Context(ctx),

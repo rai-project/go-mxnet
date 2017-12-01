@@ -1,5 +1,11 @@
 package main
 
+// #include <cuda.h>
+// #include <cuda_runtime.h>
+// #include <cuda_profiler_api.h>
+// #include <cudaProfiler.h>
+import "C"
+
 import (
 	"bufio"
 	"io/ioutil"
@@ -28,6 +34,8 @@ var (
 )
 
 func main() {
+	defer C.cuProfilerStop()
+
 	dir, _ := filepath.Abs("../tmp")
 	graph := filepath.Join(dir, "squeezenet_v1.0-symbol.json")
 	weights := filepath.Join(dir, "squeezenet_v1.0-0000.params")
