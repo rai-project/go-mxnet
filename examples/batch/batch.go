@@ -8,12 +8,14 @@ import "C"
 
 import (
 	"bufio"
+	"context"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
 
 	"github.com/rai-project/dlframework/framework/options"
+	cupti "github.com/rai-project/go-cupti"
 	nvidiasmi "github.com/rai-project/nvidia-smi"
 
 	"github.com/k0kubun/pp"
@@ -24,6 +26,8 @@ import (
 	"github.com/rai-project/config"
 	"github.com/rai-project/downloadmanager"
 	"github.com/rai-project/go-mxnet-predictor/utils"
+	"github.com/rai-project/tracer"
+	_ "github.com/rai-project/tracer/all"
 )
 
 var (
@@ -34,7 +38,10 @@ var (
 )
 
 func main() {
-	defer C.cuProfilerStop()
+
+	defer func() {
+		tracer.Close()
+	}()
 
 	dir, _ := filepath.Abs("../tmp")
 	graph := filepath.Join(dir, "squeezenet_v1.0-symbol.json")
@@ -99,6 +106,9 @@ func main() {
 	}
 	pp.Println("Using device = ", device)
 
+	span, ctx := tracer.StartSpanFromContext(context.Background(), tracer.FULL_TRACE, "mxnet_single")
+	defer span.Finish()
+
 	// create predictor
 	p, err := mxnet.CreatePredictor(
 		options.WithOptions(opts),
@@ -117,6 +127,27 @@ func main() {
 	// set input
 	if err := p.SetInput("data", input); err != nil {
 		panic(err)
+	}
+
+	if nvidiasmi.HasGPU {
+		cu, err := cupti.New(cupti.Context(ctx))
+		if err == nil {
+			defer func() {
+				cu.Wait()
+				cu.Close()
+			}()
+		}
+	}
+
+	if profile, err := mxnet.NewProfile(mxnet.ProfileAllOperators, ""); err == nil {
+		profile.Start()
+
+		defer func() {
+			profile.Stop()
+
+			profile.Publish(ctx)
+			profile.Delete()
+		}()
 	}
 
 	// do predict
