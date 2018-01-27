@@ -106,7 +106,7 @@ func main() {
 	}
 	pp.Println("Using device = ", device)
 
-	span, ctx := tracer.StartSpanFromContext(context.Background(), tracer.FULL_TRACE, "mxnet_single")
+	span, ctx := tracer.StartSpanFromContext(context.Background(), tracer.FULL_TRACE, "mxnet_batch")
 	defer span.Finish()
 
 	// create predictor
