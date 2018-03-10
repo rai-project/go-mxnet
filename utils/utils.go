@@ -42,6 +42,28 @@ func CvtImageTo1DArray(src image.Image) ([]float32, error) {
 	return res, nil
 }
 
+func CvtImageTo2DArray(src image.Image) ([][]float32, error) {
+	if src == nil {
+		return nil, fmt.Errorf("src image nil")
+	}
+
+	b := src.Bounds()
+	h := b.Max.Y - b.Min.Y // image height
+	w := b.Max.X - b.Min.X // image width
+
+	res := make([][]float32, 3*h*w)
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			r, g, b, _ := src.At(x+b.Min.X, y+b.Min.Y).RGBA()
+			res[y][x] = float32(r >> 8)
+			res[h+y][x] = float32(g >> 8)
+			res[2*h+y][x] = float32(b >> 8)
+		}
+	}
+
+	return res, nil
+}
+
 // convert go Image to 1-dim array
 // in the meantime, subtract mean image
 func CvtImageTo1DArrayMean(src image.Image, meanm []float32) ([]float32, error) {
