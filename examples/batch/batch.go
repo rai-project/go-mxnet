@@ -138,7 +138,8 @@ func main() {
 			}()
 		}
 	}
-	// Changed interface
+
+	// define profiling options
         poptions := map[string]mxnet.ProfileMode{
                 "profile_all": mxnet.ProfileAllEnable,
                 "profile_symbolic": mxnet.ProfileSymbolicOperatorsEnable,

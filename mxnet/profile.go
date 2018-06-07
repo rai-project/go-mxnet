@@ -60,9 +60,6 @@ const (
 // go binding for MXSetProfilerConfig()
 // param profile_options map of profiling options
 // param tmpDir output filepath
-// CHANGE: modified interface to support new profiling options
-// TODO: make conversion neater if possible
-// TODO: check functionality
 func NewProfile(profileOptions map[string]ProfileMode, tmpDir string) (*Profile, error) {
         if tmpDir == "" {
                 tmpDir = filepath.Join(config.App.TempDir, "mxnet", "profile")
@@ -151,7 +148,6 @@ func (p *Profile) Stop() error {
 }
 
 // go binding for MXDumpProfile()
-// CHANGE: passing bool arg to MXDumpProfile()
 func (p *Profile) Dump(finished bool) (string, error) {
 	if !p.started {
 		return "", errors.New("mxnet profile was not started")
