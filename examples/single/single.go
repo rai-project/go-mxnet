@@ -117,7 +117,17 @@ func main() {
 		}
 	}
 
-	if profile, err := mxnet.NewProfile(mxnet.ProfileAllOperators, ""); err == nil {
+	// define profiling optionse
+        poptions := map[string]mxnet.ProfileMode{
+                "profile_all": mxnet.ProfileAllDisable,
+                "profile_symbolic": mxnet.ProfileSymbolicOperatorsEnable,
+                "profile_imperative": mxnet.ProfileImperativeOperatorsDisable,
+                "profile_memory": mxnet.ProfileMemoryDisable,
+                "profile_api": mxnet.ProfileApiDisable,
+                "contiguous_dump": mxnet.ProfileContiguousDumpDisable,
+                "dump_period": mxnet.ProfileDumpPeriod,
+        }
+	if profile, err := mxnet.NewProfile(poptions, ""); err == nil {
 		profile.Start()
 
 		defer func() {
