@@ -76,6 +76,7 @@ func NewProfile(profileOptions map[string]ProfileMode, tmpDir string) (*Profile,
         }
 
         cs := C.CString(filename)
+	defer C.free(unsafe.Pointer(cs))
         keys := [8]string{"filename", "profile_all", "profile_symbolic", "profile_imperative", "profile_memory","profile_api", "contiguous_dump", "dump_period"}
 
         // convert go data structures into c data structures
@@ -99,7 +100,6 @@ func NewProfile(profileOptions map[string]ProfileMode, tmpDir string) (*Profile,
         }
 
         // free C pointers
-        C.free(unsafe.Pointer(cs))
 	C.free(unsafe.Pointer(ckeys))
         C.free(unsafe.Pointer(cvals))
 
