@@ -38,8 +38,9 @@ type Profile struct {
 	filename  string
 }
 
+// profile type
 type ProfileMode string
-
+// profile options
 const (
         ProfileAllDisable = ProfileMode(0)
         ProfileSymbolicOperatorsDisable = ProfileMode(0)
@@ -62,7 +63,7 @@ const (
 // CHANGE: modified interface to support new profiling options
 // TODO: make conversion neater if possible
 // TODO: check functionality
-func NewProfile(profile_options map[string]ProfileMode, tmpDir string) (*Profile, error) {
+func NewProfile(profileOptions map[string]ProfileMode, tmpDir string) (*Profile, error) {
         if tmpDir == "" {
                 tmpDir = filepath.Join(config.App.TempDir, "mxnet", "profile")
         }
@@ -86,7 +87,7 @@ func NewProfile(profile_options map[string]ProfileMode, tmpDir string) (*Profile
         b[0] = cs
         for i:= 1 ; i < 8 ; i++ {
                 a[i] = C.CString(keys[i])
-                b[i] = C.CString(string(profile_options[keys[i]]))
+                b[i] = C.CString(string(profileOptions[keys[i]]))
         }
 
         success, err := C.MXSetProfilerConfig(C.int(len(keys)), (**C.char)(ckeys), (**C.char)(cvals))
@@ -164,7 +165,7 @@ func (p *Profile) Dump(finished bool) (string, error) {
 	defer func() {
 		p.dumped = true
 	}()
-	var fin int = 0
+	var fin int
 	if finished {
 		fin = 1
 	}
