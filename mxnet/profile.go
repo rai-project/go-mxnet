@@ -9,12 +9,12 @@ import (
 	"time"
 	"unsafe"
 
+	"context"
 	"github.com/Unknwon/com"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
 	"github.com/rai-project/config"
 	"github.com/rai-project/tracer/chrome"
-	"golang.org/x/net/context"
 )
 
 /*
@@ -40,72 +40,73 @@ type Profile struct {
 
 // profile type
 type ProfileMode string
+
 // profile options
 const (
-        ProfileAllDisable = ProfileMode(0)
-        ProfileSymbolicOperatorsDisable = ProfileMode(0)
-        ProfileImperativeOperatorsDisable = ProfileMode(0)
-        ProfileMemoryDisable = ProfileMode(0)
-        ProfileApiDisable = ProfileMode(0)
-        ProfileContiguousDumpDisable = ProfileMode(0)
-        ProfileAllEnable  = ProfileMode(1)
-        ProfileSymbolicOperatorsEnable = ProfileMode(1)
-        ProfileImperativeOperatorsEnable = ProfileMode(1)
-        ProfileMemoryEnable = ProfileMode(1)
-        ProfileApiEnable = ProfileMode(1)
-        ProfileContiguousDumpEnable = ProfileMode(1)
-        ProfileDumpPeriod = ProfileMode(1)
+	ProfileAllDisable                 = ProfileMode(0)
+	ProfileSymbolicOperatorsDisable   = ProfileMode(0)
+	ProfileImperativeOperatorsDisable = ProfileMode(0)
+	ProfileMemoryDisable              = ProfileMode(0)
+	ProfileApiDisable                 = ProfileMode(0)
+	ProfileContiguousDumpDisable      = ProfileMode(0)
+	ProfileAllEnable                  = ProfileMode(1)
+	ProfileSymbolicOperatorsEnable    = ProfileMode(1)
+	ProfileImperativeOperatorsEnable  = ProfileMode(1)
+	ProfileMemoryEnable               = ProfileMode(1)
+	ProfileApiEnable                  = ProfileMode(1)
+	ProfileContiguousDumpEnable       = ProfileMode(1)
+	ProfileDumpPeriod                 = ProfileMode(1)
 )
 
 // go binding for MXSetProfilerConfig()
 // param profile_options map of profiling options
 // param tmpDir output filepath
 func NewProfile(profileOptions map[string]ProfileMode, tmpDir string) (*Profile, error) {
-        if tmpDir == "" {
-                tmpDir = filepath.Join(config.App.TempDir, "mxnet", "profile")
-        }
-        if !com.IsDir(tmpDir) {
-                os.MkdirAll(tmpDir, os.FileMode(0755))
-        }
-        filename, err := tempFile(tmpDir, "profile-", ".json")
-        if err != nil {
-                return nil, errors.Errorf("cannot create temporary file in %v", tmpDir)
-        }
+	if tmpDir == "" {
+		tmpDir = filepath.Join(config.App.TempDir, "mxnet", "profile")
+	}
+	if !com.IsDir(tmpDir) {
+		os.MkdirAll(tmpDir, os.FileMode(0755))
+	}
+	filename, err := tempFile(tmpDir, "profile-", ".json")
+	if err != nil {
+		return nil, errors.Errorf("cannot create temporary file in %v", tmpDir)
+	}
 
-        cs := C.CString(filename)
+	cs := C.CString(filename)
 	defer C.free(unsafe.Pointer(cs))
-        keys := [8]string{"filename", "profile_all", "profile_symbolic", "profile_imperative", "profile_memory","profile_api", "contiguous_dump", "dump_period"}
+	keys := [8]string{"filename", "profile_all", "profile_symbolic", "profile_imperative", "profile_memory", "profile_api", "contiguous_dump", "dump_period"}
 
-        // convert go data structures into c data structures
-        ckeys := C.malloc(C.size_t(8) * C.size_t(unsafe.Sizeof(uintptr(0))))
-        a := (*[1<<30 - 1]*C.char)(ckeys)
-        cvals := C.malloc(C.size_t(8) * C.size_t(unsafe.Sizeof(uintptr(0))))
-        b := (*[1<<30 - 1]*C.char)(cvals)
-        a[0] = C.CString("filename")
-        b[0] = cs
-        for i:= 1 ; i < 8 ; i++ {
-                a[i] = C.CString(keys[i])
-                b[i] = C.CString(string(profileOptions[keys[i]]))
-        }
+	// convert go data structures into c data structures
+	ckeys := C.malloc(C.size_t(8) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	a := (*[1<<30 - 1]*C.char)(ckeys)
+	cvals := C.malloc(C.size_t(8) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	b := (*[1<<30 - 1]*C.char)(cvals)
+	a[0] = C.CString("filename")
+	b[0] = cs
+	for i := 1; i < 8; i++ {
+		a[i] = C.CString(keys[i])
+		b[i] = C.CString(string(profileOptions[keys[i]]))
+	}
 
-        success, err := C.MXSetProfilerConfig(C.int(len(keys)), (**C.char)(ckeys), (**C.char)(cvals))
-        if err != nil {
-                return nil, err
-        }
-        if success != 0 {
-                return nil, GetLastError()
-        }
+	success, err := C.MXSetProfilerConfig(C.int(len(keys)), (**C.char)(ckeys), (**C.char)(cvals))
+	if err != nil {
+		return nil, err
+	}
+	if success != 0 {
+		return nil, GetLastError()
+	}
 
-        // free C pointers
+	// free C pointers
 	C.free(unsafe.Pointer(ckeys))
-        C.free(unsafe.Pointer(cvals))
+	C.free(unsafe.Pointer(cvals))
 
-        return &Profile{
-                Trace:    nil,
-                filename: filename,
-                stopped:  false,
-                dumped:   false,
-        }, nil
+	return &Profile{
+		Trace:    nil,
+		filename: filename,
+		stopped:  false,
+		dumped:   false,
+	}, nil
 
 }
 
