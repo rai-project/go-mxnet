@@ -26,5 +26,5 @@ install:
 
 script:
     #TODO fix mxnet building in travis
-    - go build ./examples/single.go
+    - go build ./examples/single/single.go
 
