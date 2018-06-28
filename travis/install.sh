@@ -11,7 +11,7 @@ checkRet() {
 }
 
 cd $MPWD/travis && git clone https://github.com/dmlc/mxnet.git --recursive
-cd $MPWD/travis/mxnet && make -j4
+cd $MPWD/travis/mxnet && make -j4 USE_BLAS=openblas USE_OPENCV=1
 #TODO fix mxnet building in travis
 #checkRet $?
 
