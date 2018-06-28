@@ -19,7 +19,7 @@ go get github.com/anthonynsimon/bild
 
 sed -i "/prefix=/c prefix=$MPWD" $MPWD/travis/mxnet.pc
 sudo cp $MPWD/travis/mxnet.pc /usr/lib/pkgconfig/
-pkg-config --libs mxnet
+pkg-config --libs --cflags mxnet
 checkRet $?
 
 exit 0
