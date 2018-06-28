@@ -26,6 +26,7 @@ addons:
     - cuda-cublas-dev-9-2
     - cuda-misc-headers-9-2
     - cuda-nvml-dev-9-2
+    - cuda-cupti-9-2
     - libcudnn7
     - libcudnn7-dev
 env:
@@ -38,19 +39,23 @@ env:
   - LD_LIBRARY_PATH=/usr/local/cuda-9.2/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
   - LD_LIBRARY_PATH=/usr/local/cuda-9.2/lib64/stubs${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
   - LD_LIBRARY_PATH=/usr/local/cuda-9.2/targets/x86_64-linux/lib/stubs/:+:${LD_LIBRARY_PATH}}
+  - LD_LIBRARY_PATH=/usr/local/cuda-9.2/extras/CUPTI/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
   - PATH=/usr/local/cuda-9.2/bin${PATH:+:${PATH}}
+  - CGO_CFLAGS="${CGO_CFLAGS} -I /usr/local/cuda-9.2/include -I/usr/local/cuda-9.2/nvvm/include -I /usr/local/cuda-9.2/extras/CUPTI/include"
   - CGO_LDFLAGS="${CGO_LDFLAGS} -L /usr/local/cuda-9.2/lib64/stubs"
+  - CGO_LDFLAGS="${CGO_LDFLAGS} -L /usr/local/nvidia/lib64 -L /usr/local/cuda-9.2/nvvm/lib64 -L /usr/local/cuda-9.2/lib64 -L /usr/local/cuda-9.2/lib64/stubs -L /usr/local/cuda-9.2/targets/x86_64-linux/lib/stubs/ -L /usr/local/cuda-9.2/lib64/stubs -L /usr/local/cuda-9.2/extras/CUPTI/lib64"
 before_install:
     - source travis/env.sh
     - sudo apt-get update
     - curl -L -s https://github.com/golang/dep/releases/download/v0.4.1/dep-linux-amd64 -o $GOPATH/bin/dep
     - chmod +x $GOPATH/bin/dep
 install:
-    # dep
+    - go env
     - dep ensure
     - travis/install.sh
-
+    - sudo find / -name libcupti.*
+    - go build
 script:
-    #TODO fix mxnet building in travis
+    - echo "Building example..."
     - go build ./examples/single/single.go
 
