@@ -1,4 +1,4 @@
-prefix=/root/MXNet/mxnet
+prefix=/home/travis/gopath/src/github.com/rai-project/go-mxnet-predictor/travis/mxnet/include
 libdir=${prefix}/lib/
 includedir=${prefix}/include
 Name: mxnet
