@@ -54,12 +54,9 @@ before_install:
 install:
     - go env
     - dep ensure
-    - travis/install.sh
-    - sudo find / -name libcupti.*
-    - sudo find / -name c_predict_api.h
-    - sudo find / -name cblas.h
-    - go build
 script:
-    - echo "Building example..."
-    - go build ./examples/single/single.go
+    - echo ${TRAVIS_BUILD_DIR}
+    - cd ${TRAVIS_BUILD_DIR}/dockerfiles
+    - make docker_build
+    - echo "Docker build successful..."
 
