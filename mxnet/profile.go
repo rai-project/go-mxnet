@@ -31,8 +31,11 @@ var initTime = time.Now()
 type Profile struct {
 	Trace     *chrome.Trace
 	startTime time.Time
+	lastPauseTime time.Time
+	lastResumeTime time.Time
 	endTime   time.Time
 	started   bool
+	paused    bool
 	stopped   bool
 	dumped    bool
 	filename  string
@@ -138,6 +141,52 @@ func (p *Profile) Stop() error {
 	}()
 	p.endTime = time.Now()
 	success, err := C.MXSetProfilerState(C.int(0))
+	if err != nil {
+		return err
+	}
+	if success != 0 {
+		return GetLastError()
+	}
+
+	return nil
+}
+
+// go binding for MXProfilePause(1)
+func (p *Profile) Pause() error {
+	if !p.started {
+		return errors.New("mxnet profile was not started")
+	}
+	if (p.stopped == true || p.paused == true) {
+		return nil
+	}
+	defer func() {
+		p.paused = true
+	}()
+	p.lastPauseTime = time.Now()
+	success, err := C.MXProfilePause(C.int(1))
+	if err != nil {
+		return err
+	}
+	if success != 0 {
+		return GetLastError()
+	}
+
+	return nil
+}
+
+// go binding for MXProfilePause(0)
+func (p *Profile) Resume() error {
+	if !p.started {
+		return errors.New("mxnet profile was not started")
+	}
+	if (p.stopped == true || p.paused == false) {
+		return nil
+	}
+	defer func() {
+		p.paused = false
+	}()
+	p.lastResumeTime = time.Now()
+	success, err := C.MXProfilePause(C.int(0))
 	if err != nil {
 		return err
 	}
