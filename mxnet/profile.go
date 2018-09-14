@@ -10,6 +10,7 @@ import (
 	"unsafe"
 
 	"context"
+
 	"github.com/Unknwon/com"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
@@ -29,16 +30,16 @@ import "C"
 var initTime = time.Now()
 
 type Profile struct {
-	Trace     *chrome.Trace
-	startTime time.Time
-	lastPauseTime time.Time
+	Trace          *chrome.Trace
+	startTime      time.Time
+	lastPauseTime  time.Time
 	lastResumeTime time.Time
-	endTime   time.Time
-	started   bool
-	paused    bool
-	stopped   bool
-	dumped    bool
-	filename  string
+	endTime        time.Time
+	started        bool
+	paused         bool
+	stopped        bool
+	dumped         bool
+	filename       string
 }
 
 // profile type
@@ -156,7 +157,7 @@ func (p *Profile) Pause() error {
 	if !p.started {
 		return errors.New("mxnet profile was not started")
 	}
-	if (p.stopped == true || p.paused == true) {
+	if p.stopped == true || p.paused == true {
 		return nil
 	}
 	defer func() {
@@ -179,7 +180,7 @@ func (p *Profile) Resume() error {
 	if !p.started {
 		return errors.New("mxnet profile was not started")
 	}
-	if (p.stopped == true || p.paused == false) {
+	if p.stopped == true || p.paused == false {
 		return nil
 	}
 	defer func() {
@@ -326,5 +327,18 @@ func (p *Profile) Publish(ctx context.Context, opts ...opentracing.StartSpanOpti
 	if err := p.Read(); err != nil {
 		return err
 	}
+	if pth, ok := ctx.Value("graph_path").(string); ok {
+		p.addNodeMetadata(pth)
+	}
 	return p.Trace.Publish(ctx, opts...)
+}
+
+func (p *Profile) addNodeMetadata(pth string) {
+	grph, err := NewGraph(pth)
+	if err != nil {
+		return
+	}
+	for event := range p.Trace.TraceEvents {
+
+	}
 }
