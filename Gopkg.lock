@@ -888,6 +888,35 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:2080faed32ab6080cc7ee0b3d7b4f121ab9dae4cc613daf52f8dbdeb1389d564"
+  name = "gonum.org/v1/gonum"
+  packages = [
+    "blas",
+    "blas/blas64",
+    "blas/gonum",
+    "floats",
+    "graph",
+    "graph/internal/linear",
+    "graph/internal/ordered",
+    "graph/internal/set",
+    "graph/internal/uid",
+    "graph/simple",
+    "graph/topo",
+    "graph/traverse",
+    "internal/asm/c128",
+    "internal/asm/f32",
+    "internal/asm/f64",
+    "internal/math32",
+    "lapack",
+    "lapack/gonum",
+    "lapack/lapack64",
+    "mat",
+  ]
+  pruneopts = "UT"
+  revision = "20644dbe1a24b75924cac09e625a63b43203528f"
+
+[[projects]]
+  branch = "master"
   digest = "1:eff11a4ed88d9d3e28dd697961c550af1c4d0d3dccdc6252715b9a65a1d541bb"
   name = "google.golang.org/genproto"
   packages = [
@@ -960,6 +989,9 @@
     "github.com/rai-project/tracer/all",
     "github.com/rai-project/tracer/chrome",
     "github.com/sirupsen/logrus",
+    "gonum.org/v1/gonum/graph",
+    "gonum.org/v1/gonum/graph/simple",
+    "gonum.org/v1/gonum/graph/topo",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
