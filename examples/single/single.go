@@ -79,7 +79,6 @@ func main() {
 	if nvidiasmi.HasGPU {
 		device = options.CUDA_DEVICE
 	}
-	pp.Println("Using device = ", device)
 
 	span, ctx := tracer.StartSpanFromContext(context.Background(), tracer.FULL_TRACE, "mxnet_single")
 	defer span.Finish()
@@ -118,26 +117,35 @@ func main() {
 	}
 
 	// define profiling options
-	poptions := map[string]mxnet.ProfileMode{
-		"profile_all": mxnet.ProfileAllDisable,
+	// poptions := map[string]mxnet.ProfileMode{
+  //   "profile_all": mxnet.ProfileAllDisable,
+  //   "profile_symbolic": mxnet.ProfileSymbolicOperatorsEnable,
+  //   "profile_imperative": mxnet.ProfileImperativeOperatorsEnable,
+  //   "profile_memory": mxnet.ProfileMemoryEnable,
+  //   "profile_api": mxnet.ProfileApiEnable,
+  //   "continuous_dump": mxnet.ProfileContiguousDumpDisable,
+  //   "dump_period": mxnet.ProfileDumpPeriod,
+  // }
+  poptions := map[string]mxnet.ProfileMode{
+		"profile_all": mxnet.ProfileAllEnable,
 		"profile_symbolic": mxnet.ProfileSymbolicOperatorsEnable,
 		"profile_imperative": mxnet.ProfileImperativeOperatorsDisable,
-		"profile_memory": mxnet.ProfileMemoryDisable,
-		"profile_api": mxnet.ProfileApiDisable,
-		"contiguous_dump": mxnet.ProfileContiguousDumpDisable,
-		"dump_period": mxnet.ProfileDumpPeriod,
+		"profile_memory": mxnet.ProfileMemoryEnable,
+		"profile_api": mxnet.ProfileApiEnable,
+		"continuous_dump": mxnet.ProfileContiguousDumpDisable,
+    "dump_period": mxnet.ProfileDumpPeriod,
 	}
-	if profile, err := mxnet.NewProfile(poptions, ""); err == nil {
+  profile, err := mxnet.NewProfile(poptions, "")
+  if  err == nil {
 		profile.Start()
 
 		defer func() {
 			profile.Pause()
-
-			profile.Resume()
+			// profile.Resume()
 
 			profile.Stop()
 
-			profile.Publish(ctx)
+      profile.Publish(context.WithValue(ctx, "graph_path", graph))
 			profile.Delete()
 		}()
 	}

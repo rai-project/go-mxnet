@@ -36,6 +36,7 @@ RUN cd mxnet && \
   echo "USE_BLAS=openblas" >>config.mk && \
   echo "USE_OPENCV=0" >>config.mk && \
   echo "ADD_CFLAGS=-I/usr/include/openblas -Wno-strict-aliasing -Wno-sign-compare -ftrack-macro-expansion=0 -Wno-misleading-indentation" >>config.mk && \
+  echo "CUDA_ARCH=\"-gencode arch=compute_30,code=sm_30  -gencode arch=compute_35,code=sm_35 -gencode arch=compute_50,code=sm_50  -gencode arch=compute_53,code=sm_53 -gencode arch=compute_60,code=sm_60  -gencode arch=compute_61,code=sm_61  -gencode arch=compute_62,code=sm_62 -gencode arch=compute_70,code=compute_70\""  >>config.mk && \
   echo "USE_CUDA=1" >>config.mk && \
   echo "USE_CUDA_PATH=/usr/local/cuda" >>config.mk && \
   echo "USE_CUDNN=1" >>config.mk && \

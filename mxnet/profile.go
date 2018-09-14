@@ -2,6 +2,7 @@ package mxnet
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -46,59 +47,74 @@ type Profile struct {
 type ProfileMode string
 
 // profile options
-const (
-	ProfileAllDisable                 = ProfileMode(0)
-	ProfileSymbolicOperatorsDisable   = ProfileMode(0)
-	ProfileImperativeOperatorsDisable = ProfileMode(0)
-	ProfileMemoryDisable              = ProfileMode(0)
-	ProfileApiDisable                 = ProfileMode(0)
-	ProfileContiguousDumpDisable      = ProfileMode(0)
-	ProfileAllEnable                  = ProfileMode(1)
-	ProfileSymbolicOperatorsEnable    = ProfileMode(1)
-	ProfileImperativeOperatorsEnable  = ProfileMode(1)
-	ProfileMemoryEnable               = ProfileMode(1)
-	ProfileApiEnable                  = ProfileMode(1)
-	ProfileContiguousDumpEnable       = ProfileMode(1)
-	ProfileDumpPeriod                 = ProfileMode(1)
+var (
+	ProfileAllDisable                 = ProfileMode(fmt.Sprintf("%d", 0))
+	ProfileSymbolicOperatorsDisable   = ProfileMode(fmt.Sprintf("%d", 0))
+	ProfileImperativeOperatorsDisable = ProfileMode(fmt.Sprintf("%d", 0))
+	ProfileMemoryDisable              = ProfileMode(fmt.Sprintf("%d", 0))
+	ProfileApiDisable                 = ProfileMode(fmt.Sprintf("%d", 0))
+	ProfileContiguousDumpDisable      = ProfileMode(fmt.Sprintf("%d", 0))
+	ProfileAllEnable                  = ProfileMode(fmt.Sprintf("%d", 1))
+	ProfileSymbolicOperatorsEnable    = ProfileMode(fmt.Sprintf("%d", 1))
+	ProfileImperativeOperatorsEnable  = ProfileMode(fmt.Sprintf("%d", 1))
+	ProfileMemoryEnable               = ProfileMode(fmt.Sprintf("%d", 1))
+	ProfileApiEnable                  = ProfileMode(fmt.Sprintf("%d", 1))
+	ProfileContiguousDumpEnable       = ProfileMode(fmt.Sprintf("%d", 1))
+	ProfileDumpPeriod                 = ProfileMode(fmt.Sprintf("%d", 1))
 )
 
 // go binding for MXSetProfilerConfig()
 // param profile_options map of profiling options
 // param tmpDir output filepath
 func NewProfile(profileOptions map[string]ProfileMode, tmpDir string) (*Profile, error) {
-	if tmpDir == "" {
-		tmpDir = filepath.Join(config.App.TempDir, "mxnet", "profile")
-	}
-	if !com.IsDir(tmpDir) {
-		os.MkdirAll(tmpDir, os.FileMode(0755))
-	}
-	filename, err := tempFile(tmpDir, "profile-", ".json")
-	if err != nil {
-		return nil, errors.Errorf("cannot create temporary file in %v", tmpDir)
-	}
-
-	cs := C.CString(filename)
-	defer C.free(unsafe.Pointer(cs))
-	keys := [8]string{"filename", "profile_all", "profile_symbolic", "profile_imperative", "profile_memory", "profile_api", "contiguous_dump", "dump_period"}
 
 	// convert go data structures into c data structures
 	ckeys := C.malloc(C.size_t(8) * C.size_t(unsafe.Sizeof(uintptr(0))))
 	a := (*[1<<30 - 1]*C.char)(ckeys)
 	cvals := C.malloc(C.size_t(8) * C.size_t(unsafe.Sizeof(uintptr(0))))
 	b := (*[1<<30 - 1]*C.char)(cvals)
-	a[0] = C.CString("filename")
-	b[0] = cs
-	for i := 1; i < 8; i++ {
-		a[i] = C.CString(keys[i])
-		b[i] = C.CString(string(profileOptions[keys[i]]))
+	keyLen := 0
+	for k, v := range profileOptions {
+		a[keyLen] = C.CString(k)
+		b[keyLen] = C.CString(string(v))
+		keyLen++
+	}
+	if _, ok := profileOptions["filename"]; !ok {
+		if tmpDir == "" {
+			tmpDir = filepath.Join(config.App.TempDir, "mxnet", "profile")
+		}
+		if !com.IsDir(tmpDir) {
+			os.MkdirAll(tmpDir, os.FileMode(0755))
+		}
+		filename, err := tempFile(tmpDir, "profile-", ".json")
+		if err != nil {
+			return nil, errors.Errorf("cannot create temporary file in %v", tmpDir)
+		}
+
+		profileOptions["filename"] = ProfileMode(filename)
+
+		cs := C.CString(filename)
+		defer C.free(unsafe.Pointer(cs))
+
+		a[keyLen] = C.CString("filename")
+		b[keyLen] = cs
+		keyLen++
 	}
 
-	success, err := C.MXSetProfilerConfig(C.int(len(keys)), (**C.char)(ckeys), (**C.char)(cvals))
-	if err != nil {
-		return nil, err
-	}
+	fileName := string(profileOptions["filename"])
+
+	success := C.MXSetProfilerConfig(C.int(keyLen), (**C.char)(ckeys), (**C.char)(cvals))
+	// if err != nil {
+	//   if err.Error() == "no such file or directory" {
+	//     return nil, errors.Wrapf(err,
+	//       "failed to set profiler configuration the path %s was not writable",
+	//       fileName,
+	//     )
+	//   }
+	// 	return nil, errors.Wrap(err, "failed to set profiler configuration")
+	// }
 	if success != 0 {
-		return nil, GetLastError()
+		return nil, errors.Wrap(GetLastError(), "failed to set profiler configuration")
 	}
 
 	// free C pointers
@@ -107,7 +123,7 @@ func NewProfile(profileOptions map[string]ProfileMode, tmpDir string) (*Profile,
 
 	return &Profile{
 		Trace:    nil,
-		filename: filename,
+		filename: fileName,
 		stopped:  false,
 		dumped:   false,
 	}, nil
@@ -265,7 +281,7 @@ func (p *Profile) Read() error {
 	}
 	bts, err := ioutil.ReadFile(p.filename)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "unable to read file %s", p.filename)
 	}
 	p.Trace = new(chrome.Trace)
 	if err := json.Unmarshal(bts, p.Trace); err != nil {
@@ -310,6 +326,10 @@ func (p *Profile) process() {
 	for ii, event := range events {
 		events[ii].Name = strings.Trim(strings.Trim(event.Name, "["), "]")
 		events[ii].Time = start.Add(time.Duration(event.Timestamp-minTime) * timeUnit)
+		if events[ii].Args == nil {
+			events[ii].Args = make(map[string]interface{})
+		}
+		events[ii].Args["layer_sequence_index"] = ii
 	}
 
 	p.Trace.TraceEvents = events
@@ -324,12 +344,24 @@ func (p *Profile) Delete() error {
 }
 
 func (p *Profile) Publish(ctx context.Context, opts ...opentracing.StartSpanOption) error {
+
 	if err := p.Read(); err != nil {
+		panic(err)
 		return err
 	}
+
 	if pth, ok := ctx.Value("graph_path").(string); ok {
 		p.addNodeMetadata(pth)
 	}
+
+	// bts, err := json.Marshal(p.Trace)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// com.WriteFile(p.filename, bts)
+
+	// panic(p.filename)
+
 	return p.Trace.Publish(ctx, opts...)
 }
 
@@ -338,7 +370,32 @@ func (p *Profile) addNodeMetadata(pth string) {
 	if err != nil {
 		return
 	}
-	for event := range p.Trace.TraceEvents {
+	nds, err := grph.TopologicallySortedNodes()
+	if err != nil {
+		return
+	}
 
+	visited := map[string]bool{}
+	events := p.Trace.TraceEvents
+	for ii, event := range events {
+		foundOperatorName := ""
+		for _, nd := range nds {
+			if event.Category != "operator" {
+				continue
+			}
+			ndOp := strings.ToLower(nd.Op)
+			ndName := strings.ToLower(nd.Name)
+			if ndOp != strings.ToLower(event.Name) {
+				continue
+			}
+			if _, ok := visited[ndOp+"/"+ndName]; ok {
+				continue
+			}
+			foundOperatorName = nd.Name
+			visited[ndOp+"/"+ndName] = true
+			break
+		}
+		event.Args["operator_name"] = foundOperatorName
+		events[ii] = event
 	}
 }

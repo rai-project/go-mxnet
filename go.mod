@@ -89,6 +89,7 @@ require (
 	golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f
 	golang.org/x/sys v0.0.0-20180620133508-ad87a3a340fa
 	golang.org/x/text v0.3.0
+	gonum.org/v1/gonum v0.0.0-20180913065651-20644dbe1a24
 	google.golang.org/genproto v0.0.0-20180608181217-32ee49c4dd80
 	google.golang.org/grpc v1.13.0
 	gopkg.in/yaml.v2 v2.2.1

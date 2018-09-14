@@ -126,6 +126,7 @@ github.com/xordataexchange/crypt v0.0.0-20170626215501-b2862e3d0a77 h1:BUfWaGtsL
 github.com/xordataexchange/crypt v0.0.0-20170626215501-b2862e3d0a77/go.mod h1:aYKd//L2LvnjZzWKhF00oedf4jCCReLcmhLdhm1A27Q=
 golang.org/x/crypto v0.0.0-20180621125126-a49355c7e3f8 h1:h7zdf0RiEvWbYBKIx4b+q41xoUVnMmvsGZnIVE5syG8=
 golang.org/x/crypto v0.0.0-20180621125126-a49355c7e3f8/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
+golang.org/x/exp v0.0.0-20180321215751-8460e604b9de/go.mod h1:CJ0aWSM057203Lf6IL+f9T1iT9GByDxfZKAQTCR3kQA=
 golang.org/x/net v0.0.0-20180621144259-afe8f62b1d6b h1:VgWwPFFrh6LyvObbug7TZtI8EX5zwx7WsS6Y4Bqezqo=
 golang.org/x/net v0.0.0-20180621144259-afe8f62b1d6b/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
 golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f h1:wMNYb4v58l5UBM7MYRLPG6ZhfOqbKu7X5eyFl8ZhKvA=
@@ -134,6 +135,9 @@ golang.org/x/sys v0.0.0-20180620133508-ad87a3a340fa h1:MUO6aP6ViFfqImh/3zU3O6QX3
 golang.org/x/sys v0.0.0-20180620133508-ad87a3a340fa/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
 golang.org/x/text v0.3.0 h1:g61tztE5qeGQ89tm6NTjjM9VPIm088od1l6aSorWRWg=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
+golang.org/x/tools v0.0.0-20180525024113-a5b4c53f6e8b/go.mod h1:n7NCudcB/nEzxVGmLbDWY5pfWTLqBcC2KZ6jyYvM4mQ=
+gonum.org/v1/gonum v0.0.0-20180913065651-20644dbe1a24 h1:QH7yARpZo6y6AYm4BYnHC2wG29oKQzuZm2qTtjrbY0Q=
+gonum.org/v1/gonum v0.0.0-20180913065651-20644dbe1a24/go.mod h1:Y+Yx5eoAFn32cQvJDxZx5Dpnq+c3wtXuadVZAcxbbBo=
 google.golang.org/genproto v0.0.0-20180608181217-32ee49c4dd80 h1:GL7nK1hkDKrkor0eVOYcMdIsUGErFnaC2gpBOVC+vbI=
 google.golang.org/genproto v0.0.0-20180608181217-32ee49c4dd80/go.mod h1:JiN7NxoALGmiZfu7CAH4rXhgtRTLTxftemlI0sWmxmc=
 google.golang.org/grpc v1.13.0 h1:bHIbVsCwmvbArgCJmLdgOdHFXlKqTOVjbibbS19cXHc=
