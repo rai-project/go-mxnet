@@ -378,7 +378,6 @@ func (p *Profile) addNodeMetadata(pth string) {
 	visited := map[string]bool{}
 	events := p.Trace.TraceEvents
 	for ii, event := range events {
-		foundOperatorName := ""
 		for _, nd := range nds {
 			if event.Category != "operator" {
 				continue
@@ -391,11 +390,14 @@ func (p *Profile) addNodeMetadata(pth string) {
 			if _, ok := visited[ndOp+"/"+ndName]; ok {
 				continue
 			}
-			foundOperatorName = nd.Name
+
 			visited[ndOp+"/"+ndName] = true
+			event.Args["operator_name"] = nd.Name
+			for k, v := range nd.Attributes {
+				event.Args[k] = v
+			}
 			break
 		}
-		event.Args["operator_name"] = foundOperatorName
 		events[ii] = event
 	}
 }

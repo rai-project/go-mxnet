@@ -17,7 +17,7 @@ type GraphNode struct {
 	Op         string                 `json:"op"`
 	Name       string                 `json:"name"`
 	Inputs     [][]int64              `json:"inputs"`
-	Attributes map[string]interface{} `json:"attrs,omitempty"`
+	Attributes map[string]interface{} `json:"param,omitempty"`
 }
 
 type Graph struct {
