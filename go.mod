@@ -9,7 +9,7 @@ require (
 	github.com/anthonynsimon/bild v0.10.0
 	github.com/apache/thrift v0.0.0-20180622210517-af7ecd6a2b15
 	github.com/armon/consul-api v0.0.0-20180202201655-eb2c6b5be1b6
-	github.com/aws/aws-sdk-go v1.14.10
+	github.com/aws/aws-sdk-go v1.15.35
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d
 	github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd
 	github.com/coreos/etcd v3.3.8+incompatible

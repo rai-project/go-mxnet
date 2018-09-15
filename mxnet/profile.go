@@ -323,13 +323,18 @@ func (p *Profile) process() {
 		minTime = event.Timestamp
 	}
 
+	layerSequenceIndex := 0
 	for ii, event := range events {
 		events[ii].Name = strings.Trim(strings.Trim(event.Name, "["), "]")
 		events[ii].Time = start.Add(time.Duration(event.Timestamp-minTime) * timeUnit)
 		if events[ii].Args == nil {
 			events[ii].Args = make(map[string]interface{})
 		}
-		events[ii].Args["layer_sequence_index"] = ii
+		if event.Category != "operator" {
+			continue
+		}
+		events[ii].Args["layer_sequence_index"] = layerSequenceIndex
+		layerSequenceIndex++
 	}
 
 	p.Trace.TraceEvents = events
@@ -376,9 +381,12 @@ func (p *Profile) addNodeMetadata(pth string) {
 	}
 
 	visited := map[string]bool{}
-	events := p.Trace.TraceEvents
-	for ii, event := range events {
+	events := []chrome.TraceEvent{}
+	for ii, event := range p.Trace.TraceEvents {
 		for _, nd := range nds {
+			if nd.Op == "null" && ii != 0 {
+				continue
+			}
 			if event.Category != "operator" {
 				continue
 			}
@@ -390,7 +398,6 @@ func (p *Profile) addNodeMetadata(pth string) {
 			if _, ok := visited[ndOp+"/"+ndName]; ok {
 				continue
 			}
-
 			visited[ndOp+"/"+ndName] = true
 			event.Args["operator_name"] = nd.Name
 			for k, v := range nd.Attributes {
@@ -398,6 +405,7 @@ func (p *Profile) addNodeMetadata(pth string) {
 			}
 			break
 		}
-		events[ii] = event
+		events = append(events, event)
 	}
+	p.Trace.TraceEvents = events
 }

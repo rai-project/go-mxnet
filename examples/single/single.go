@@ -140,7 +140,7 @@ func main() {
 		profile.Start()
 
 		defer func() {
-			profile.Pause()
+			// profile.Pause()
 			// profile.Resume()
 
 			profile.Stop()

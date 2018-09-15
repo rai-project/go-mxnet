@@ -54,14 +54,12 @@ func (g Graph) ID() int64 {
 
 func (g *Graph) TopologicallySortedNodes() ([]GraphNode, error) {
 
-	graphIdxs := map[int64]string{}
 	graphIds := map[string]int64{}
 
 	grph := simple.NewDirectedGraph()
 	for ii, nd := range g.Nodes {
-		nd.id = grph.NewNode().ID()
+		nd.id = int64(ii)
 		grph.AddNode(nd)
-		graphIdxs[int64(ii)] = nd.Name
 		graphIds[nd.Name] = nd.ID()
 	}
 	for _, ind := range g.Nodes {
@@ -74,15 +72,7 @@ func (g *Graph) TopologicallySortedNodes() ([]GraphNode, error) {
 			if len(ond) != 2 {
 				continue
 			}
-			name, ok := graphIdxs[ond[0]]
-			if !ok {
-				continue
-			}
-			outNodeId, ok := graphIds[name]
-			if !ok {
-				continue
-			}
-			inNode := grph.Node(outNodeId)
+			inNode := grph.Node(ond[0])
 			grph.SetEdge(grph.NewEdge(inNode, outNode))
 		}
 	}
