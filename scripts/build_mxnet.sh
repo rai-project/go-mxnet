@@ -1,7 +1,7 @@
 FRAMEWORK_VERSION=1.3.0
 
 SRC_DIR=$HOME/code/mxnet
-DIST_DIR=$HOME/frameworks/mxnet
+DIST_DIR=/opt/frameworks/mxnet
 
 mkdir -p $DIST_DIR
 
