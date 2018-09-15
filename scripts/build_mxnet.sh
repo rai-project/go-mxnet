@@ -28,5 +28,5 @@ make -j8 PREFIX=$DIST_DIR
 cp -r include $DIST_DIR/
 cp -r lib $DIST_DIR/
 
- export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
- export LD_LIBRARY_PATH=$DIST_DIR/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$DIST_DIR/lib:$LD_LIBRARY_PATH
