@@ -17,15 +17,11 @@ cp make/config.mk . && \
   echo "USE_PROFILER=1" >>config.mk && \
   echo "USE_OPENCV=0" >>config.mk
 
-if [[ "$OSTYPE" == "linux-gnu" ]]; then
-  echo "USE_CUDA=1" >>config.mk
-  echo "USE_CUDNN=1" >>config.mk
-  echo "CUDA_ARCH=\"-gencode arch=compute_30,code=sm_30  -gencode arch=compute_35,code=sm_35 -gencode arch=compute_50,code=sm_50  -gencode arch=compute_53,code=sm_53 -gencode arch=compute_60,code=sm_60  -gencode arch=compute_61,code=sm_61  -gencode arch=compute_62,code=sm_62 -gencode arch=compute_70,code=compute_70\""  >>config.mk
-  echo "ADD_CFLAGS= -ftrack-macro-expansion=0" >>config.mk
-elif [[ "$OSTYPE" == "darwin"* ]]; then
-  echo "USE_OPENMP=0" >> config.mk
-  echo "USE_BLAS=apple" >> config.mk
-fi
+echo "USE_CUDA=1" >>config.mk
+echo "USE_CUDA_PATH = /usr/local/cuda" >> config.mk
+echo "USE_CUDNN=1" >>config.mk
+echo "CUDA_ARCH=\"-gencode arch=compute_30,code=sm_30  -gencode arch=compute_35,code=sm_35 -gencode arch=compute_50,code=sm_50  -gencode arch=compute_53,code=sm_53 -gencode arch=compute_60,code=sm_60  -gencode arch=compute_61,code=sm_61  -gencode arch=compute_62,code=sm_62 -gencode arch=compute_70,code=compute_70\""  >>config.mk
+echo "ADD_CFLAGS= -ftrack-macro-expansion=0" >>config.mk
 
 make -j8 PREFIX=$DIST_DIR
 
