@@ -1,7 +1,7 @@
 FRAMEWORK_VERSION=1.3.0
 
 SRC_DIR=$HOME/code/mxnet
-DIST_DIR=/opt/frameworks/mxnet
+DIST_DIR=/opt/mxnet
 
 mkdir -p $DIST_DIR
 
@@ -27,7 +27,7 @@ echo "CUDA_ARCH=-gencode=arch=compute_52,code=\"sm_52,compute_52\" " >> config.m
 echo "CUDA_ARCH=-gencode=arch=compute_53,code=\"sm_53,compute_53\" " >> config.mk
 echo "CUDA_ARCH=-gencode=arch=compute_60,code=\"sm_60,compute_60\" " >> config.mk
 echo "CUDA_ARCH=-gencode=arch=compute_61,code=\"sm_61,compute_61\" " >> config.mk
-echo "CUDA_ARCH=-gencode=arch=compute_70,code=\"sm_70,compute_70\" " >> config.mk
+echo "CUDA_ARCH=-gencode=arch=compute_70,code=\"sm_70\" " >> config.mk
 echo "ADD_CFLAGS= -ftrack-macro-expansion=0" >>config.mk
 
 make -j8 PREFIX=$DIST_DIR
