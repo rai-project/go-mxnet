@@ -355,8 +355,10 @@ func (p *Profile) Publish(ctx context.Context, opts ...opentracing.StartSpanOpti
 		return err
 	}
 
-	if pth, ok := ctx.Value("graph_path").(string); ok {
-		p.addNodeMetadata(pth)
+	if false {
+		if pth, ok := ctx.Value("graph_path").(string); ok {
+			p.addNodeMetadata(pth)
+		}
 	}
 
 	// bts, err := json.Marshal(p.Trace)
