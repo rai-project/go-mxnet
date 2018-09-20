@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 	"unsafe"
@@ -257,6 +258,11 @@ func (p *Profile) String() (string, error) {
 	return string(bts), nil
 }
 
+func fixupProfileBuffer(bts []byte) []byte {
+	var re = regexp.MustCompile(`(?m)\[\n,\n\n`)
+	return re.ReplaceAll(bts, []byte{'['})
+}
+
 func (p *Profile) Read() error {
 	if p.Trace != nil {
 		return nil
@@ -275,7 +281,6 @@ func (p *Profile) Read() error {
 			return err
 		}
 	}
-
 	if !com.IsFile(p.filename) {
 		return errors.Errorf("unable to read profile because %v does not exist", p.filename)
 	}
@@ -283,6 +288,7 @@ func (p *Profile) Read() error {
 	if err != nil {
 		return errors.Wrapf(err, "unable to read file %s", p.filename)
 	}
+	bts = fixupProfileBuffer(bts)
 	p.Trace = new(chrome.Trace)
 	if err := json.Unmarshal(bts, p.Trace); err != nil {
 		p.Trace = nil
@@ -351,7 +357,7 @@ func (p *Profile) Delete() error {
 func (p *Profile) Publish(ctx context.Context, opts ...opentracing.StartSpanOption) error {
 
 	if err := p.Read(); err != nil {
-		panic(err)
+		log.WithError(err).Errorf("failed to read profile at %s", p.filename)
 		return err
 	}
 
