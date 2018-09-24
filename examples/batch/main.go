@@ -26,7 +26,6 @@ import (
 	"github.com/rai-project/go-mxnet-predictor/mxnet"
 	"github.com/rai-project/go-mxnet-predictor/utils"
 
-	nvidiasmi "github.com/rai-project/nvidia-smi"
 	"github.com/rai-project/tracer"
 
 	//_ "github.com/rai-project/tracer/all"
@@ -123,12 +122,7 @@ func main() {
 	inputDims := []uint32{3, 227, 227}
 
 	device := options.CPU_DEVICE
-	if nvidiasmi.HasGPU {
-		device = options.CUDA_DEVICE
-
-	} else {
-		panic("no GPU")
-	}
+	device = options.CUDA_DEVICE
 
 	/*
 		span, ctx := tracer.StartSpanFromContext(context.Background(), tracer.FULL_TRACE, "mxnet_batch")
@@ -163,7 +157,6 @@ func main() {
 	// 		}()
 	// 	}
 	// }
-
 	/*
 	   	// define profiling options
 	   poptions := map[string]mxnet.ProfileMode{
@@ -200,13 +193,13 @@ func main() {
 	if err = p.Forward(); err != nil {
 		panic(err)
 	}
-	C.cudaProfilerStop()
 
 	// get predict result
 	output, err := p.GetOutput(0)
 	if err != nil {
 		panic(err)
 	}
+	C.cudaProfilerStop()
 
 	var labels []string
 	f, err := os.Open(features)
