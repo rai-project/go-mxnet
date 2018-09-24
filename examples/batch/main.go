@@ -9,6 +9,7 @@ import "C"
 
 import (
 	"bufio"
+	"context"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -34,7 +35,7 @@ import (
 )
 
 var (
-	batch        = 64
+	batchSize    = 64
 	graph_url    = "http://s3.amazonaws.com/store.carml.org/models/mxnet/bvlc_alexnet/bvlc_alexnet-symbol.json"
 	weights_url  = "http://s3.amazonaws.com/store.carml.org/models/mxnet/bvlc_alexnet/bvlc_alexnet-0000.params"
 	features_url = "http://data.dmlc.ml/mxnet/models/imagenet/synset.txt"
@@ -88,7 +89,7 @@ func main() {
 	var input []float32
 	for ii := 0; ii < batchSize; ii++ {
 		resized := transform.Resize(img, 227, 227, transform.Linear)
-		res, err := cvtImageTo1DArray(resized, []float32{123, 117, 104})
+		res, err := utils.CvtImageTo1DArray(resized, []float32{123, 117, 104})
 		if err != nil {
 			panic(err)
 		}
@@ -106,7 +107,7 @@ func main() {
 		panic("no GPU")
 	}
 
-	span, ctx := tracer.StartSpanFromContext(ctx, tracer.FULL_TRACE, "mxnet_example")
+	span, ctx := tracer.StartSpanFromContext(context.Background(), tracer.FULL_TRACE, "mxnet_batch")
 	defer span.Finish()
 
 	// create predictor
@@ -116,7 +117,7 @@ func main() {
 		options.Symbol(symbol),
 		options.Weights(params),
 		options.InputNode("data", inputDims),
-		options.BatchSize(uint32(batch)),
+		options.BatchSize(uint32(batchSize)),
 	)
 
 	if err != nil {
@@ -187,17 +188,19 @@ func main() {
 		labels = append(labels, line)
 	}
 
-	len := len(output) / batch
-	for i := 0; i < cnt; i++ {
+	len := len(output) / batchSize
+	for ii := 0; ii < batchSize; ii++ {
 		idxs := make([]int, len)
-		for j := 0; j < len; j++ {
-			idxs[j] = j
+		for jj := 0; jj < len; jj++ {
+			idxs[jj] = jj
 		}
-		as := utils.ArgSort{Args: output[i*len : (i+1)*len], Idxs: idxs}
+		as := utils.ArgSort{Args: output[ii*len : (ii+1)*len], Idxs: idxs}
 		sort.Sort(as)
 
-		pp.Println(as.Args[0])
-		pp.Println(labels[as.Idxs[0]])
+		if ii == 0 {
+			pp.Println(as.Args[0])
+			pp.Println(labels[as.Idxs[0]])
+		}
 	}
 
 	// os.RemoveAll(dir)
