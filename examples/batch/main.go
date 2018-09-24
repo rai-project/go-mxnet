@@ -1,63 +1,70 @@
 package main
 
+// #cgo linux CFLAGS: -I/usr/local/cuda/include
+// #cgo linux LDFLAGS: -lcuda -lcudart -L/usr/local/cuda/lib64
 // #include <cuda.h>
 // #include <cuda_runtime.h>
 // #include <cuda_profiler_api.h>
-// #include <cudaProfiler.h>
 import "C"
 
 import (
 	"bufio"
-	"context"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
 
+	"github.com/anthonynsimon/bild/imgio"
+	"github.com/anthonynsimon/bild/transform"
+	"github.com/rai-project/config"
 	"github.com/rai-project/dlframework/framework/options"
-	cupti "github.com/rai-project/go-cupti"
+	"github.com/rai-project/downloadmanager"
 	nvidiasmi "github.com/rai-project/nvidia-smi"
 
 	"github.com/k0kubun/pp"
 	"github.com/rai-project/go-mxnet-predictor/mxnet"
-
-	"github.com/anthonynsimon/bild/imgio"
-	"github.com/anthonynsimon/bild/transform"
-	"github.com/rai-project/config"
-	"github.com/rai-project/downloadmanager"
 	"github.com/rai-project/go-mxnet-predictor/utils"
+
+	nvidiasmi "github.com/rai-project/nvidia-smi"
 	"github.com/rai-project/tracer"
-	_ "github.com/rai-project/tracer/all"
+
+	//_ "github.com/rai-project/tracer/all"
+
+	_ "github.com/rai-project/tracer/jaeger"
 )
 
 var (
-	batch        = 10
-	graph_url    = "http://data.dmlc.ml/models/imagenet/squeezenet/squeezenet_v1.0-symbol.json"
-	weights_url  = "http://data.dmlc.ml/models/imagenet/squeezenet/squeezenet_v1.0-0000.params"
+	batch        = 64
+	graph_url    = "http://s3.amazonaws.com/store.carml.org/models/mxnet/bvlc_alexnet/bvlc_alexnet-symbol.json"
+	weights_url  = "http://s3.amazonaws.com/store.carml.org/models/mxnet/bvlc_alexnet/bvlc_alexnet-0000.params"
 	features_url = "http://data.dmlc.ml/mxnet/models/imagenet/synset.txt"
 )
 
 func main() {
 
-	defer func() {
-		tracer.Close()
-	}()
+	defer tracer.Close()
 
 	dir, _ := filepath.Abs("../tmp")
-	graph := filepath.Join(dir, "squeezenet_v1.0-symbol.json")
-	weights := filepath.Join(dir, "squeezenet_v1.0-0000.params")
+	graph := filepath.Join(dir, "bvlc_alexnet-symbol.json")
+	weights := filepath.Join(dir, "bvlc_alexnet-0000.params")
 	features := filepath.Join(dir, "synset.txt")
 
-	if _, err := downloadmanager.DownloadInto(graph_url, dir); err != nil {
-		os.Exit(-1)
+	if _, err := os.Stat(graph); os.IsNotExist(err) {
+		if _, err := downloadmanager.DownloadInto(graph_url, dir); err != nil {
+			panic(err)
+		}
 	}
+	if _, err := os.Stat(weights); os.IsNotExist(err) {
 
-	if _, err := downloadmanager.DownloadInto(weights_url, dir); err != nil {
-		os.Exit(-1)
+		if _, err := downloadmanager.DownloadInto(weights_url, dir); err != nil {
+			panic(err)
+		}
 	}
+	if _, err := os.Stat(features); os.IsNotExist(err) {
 
-	if _, err := downloadmanager.DownloadInto(features_url, dir); err != nil {
-		os.Exit(-1)
+		if _, err := downloadmanager.DownloadInto(features_url, dir); err != nil {
+			panic(err)
+		}
 	}
 
 	// load model
@@ -70,43 +77,36 @@ func main() {
 		panic(err)
 	}
 
-	var input []float32
-	cnt := 0
-
 	imgDir, _ := filepath.Abs("../_fixtures")
-	err = filepath.Walk(imgDir, func(path string, info os.FileInfo, err error) error {
-		if path == imgDir || filepath.Ext(path) != ".jpg" || cnt >= batch {
-			return nil
-		}
+	imagePath := filepath.Join(imgDir, "platypus.jpg")
 
-		img, err := imgio.Open(path)
-		if err != nil {
-			return err
-		}
-		resized := transform.Resize(img, 224, 224, transform.Linear)
-		res, err := utils.CvtImageTo1DArray(resized)
-		if err != nil {
-			panic(err)
-		}
-		input = append(input, res...)
-		cnt++
-
-		return nil
-	})
+	img, err := imgio.Open(imagePath)
 	if err != nil {
 		panic(err)
 	}
 
+	var input []float32
+	for ii := 0; ii < batchSize; ii++ {
+		resized := transform.Resize(img, 227, 227, transform.Linear)
+		res, err := cvtImageTo1DArray(resized, []float32{123, 117, 104})
+		if err != nil {
+			panic(err)
+		}
+		input = append(input, res...)
+	}
+
 	opts := options.New()
-	inputDims := []uint32{3, 224, 224}
+	inputDims := []uint32{3, 227, 227}
 
 	device := options.CPU_DEVICE
 	if nvidiasmi.HasGPU {
 		device = options.CUDA_DEVICE
-	}
-	pp.Println("Using device = ", device)
 
-	span, ctx := tracer.StartSpanFromContext(context.Background(), tracer.FULL_TRACE, "mxnet_batch")
+	} else {
+		panic("no GPU")
+	}
+
+	span, ctx := tracer.StartSpanFromContext(ctx, tracer.FULL_TRACE, "mxnet_example")
 	defer span.Finish()
 
 	// create predictor
@@ -124,31 +124,31 @@ func main() {
 	}
 	defer p.Close()
 
-	// set input
 	if err := p.SetInput("data", input); err != nil {
 		panic(err)
 	}
 
-	if nvidiasmi.HasGPU {
-		cu, err := cupti.New(cupti.Context(ctx))
-		if err == nil {
-			defer func() {
-				cu.Wait()
-				cu.Close()
-			}()
-		}
-	}
+	// if nvidiasmi.HasGPU {
+	// 	cu, err := cupti.New(cupti.Context(ctx))
+	// 	if err == nil {
+	// 		defer func() {
+	// 			cu.Wait()
+	// 			cu.Close()
+	// 		}()
+	// 	}
+	// }
 
 	// define profiling options
 	poptions := map[string]mxnet.ProfileMode{
-		"profile_all": mxnet.ProfileAllEnable,
-		"profile_symbolic": mxnet.ProfileSymbolicOperatorsEnable,
+		"profile_all":        mxnet.ProfileAllEnable,
+		"profile_symbolic":   mxnet.ProfileSymbolicOperatorsEnable,
 		"profile_imperative": mxnet.ProfileImperativeOperatorsEnable,
-		"profile_memory": mxnet.ProfileMemoryDisable,
-		"profile_api": mxnet.ProfileApiDisable,
-		"contiguous_dump": mxnet.ProfileContiguousDumpDisable,
-		"dump_period": mxnet.ProfileDumpPeriod,
+		"profile_memory":     mxnet.ProfileMemoryDisable,
+		"profile_api":        mxnet.ProfileApiDisable,
+		"contiguous_dump":    mxnet.ProfileContiguousDumpDisable,
+		"dump_period":        mxnet.ProfileDumpPeriod,
 	}
+
 	if profile, err := mxnet.NewProfile(poptions, ""); err == nil {
 		profile.Start()
 
