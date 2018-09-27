@@ -16,12 +16,17 @@ package mxnet
 
 /*
 // go preamble
+#cgo linux CFLAGS: -I/usr/local/cuda/include
+#cgo linux LDFLAGS: -lcuda -lcudart -L/usr/local/cuda/lib64
+#include <cuda.h>
+#include <cuda_runtime.h>
 #include <mxnet/c_predict_api.h>
 #include <stdlib.h>
 */
 import "C"
 import (
 	"fmt"
+	"time"
 	"unsafe"
 
 	"github.com/pkg/errors"
@@ -253,11 +258,32 @@ func (s *Predictor) SetInput(key string, data []float32) error {
 
 // run a forward pass after SetInput
 // go binding for MXPredForward
-func (s *Predictor) Forward() error {
+func (s *Predictor) Forward0() error {
 	success := C.MXPredForward(s.handle)
 	if success != 0 {
 		return GetLastError()
 	}
+	return nil
+}
+func (s *Predictor) Forward() error {
+	for ii := 0; ii < 10; ii++ {
+		C.MXPredForward(s.handle)
+		s.GetOutput(0)
+	}
+	C.cudaDeviceSynchronize()
+	elapsed := time.Duration(0)
+	for ii := 0; ii < 100; ii++ {
+		start := time.Now()
+		C.MXPredForward(s.handle)
+		s.GetOutput(0)
+		C.cudaDeviceSynchronize()
+		elapsed += time.Since(start)
+	}
+
+	avg := elapsed / time.Duration(100)
+
+	//	fmt.Printf("%v,%v\n", int(s.options.BatchSize()), avg)
+	fmt.Printf(">>>%v\n", avg)
 	return nil
 }
 

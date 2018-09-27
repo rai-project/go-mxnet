@@ -5,3 +5,8 @@ tmp
 vendor
 _obj
 .vscode/
+
+batch
+single
+
+*nvprof*

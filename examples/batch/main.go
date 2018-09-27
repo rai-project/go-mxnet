@@ -64,6 +64,13 @@ func cvtImageTo1DArray(src image.Image, mean []float32) ([]float32, error) {
 }
 
 func main() {
+	for _, ii := range []int{1, 2, 4, 8, 16, 32, 64, 128, 256, 384} {
+		batchSize = ii
+		run()
+	}
+}
+
+func run() {
 
 	defer tracer.Close()
 
@@ -188,18 +195,11 @@ func main() {
 		panic(err)
 	}
 
-	C.cudaProfilerStart()
-	// do predict
-	if err = p.Forward(); err != nil {
-		panic(err)
-	}
-
 	// get predict result
 	output, err := p.GetOutput(0)
 	if err != nil {
 		panic(err)
 	}
-	C.cudaProfilerStop()
 
 	var labels []string
 	f, err := os.Open(features)
@@ -222,7 +222,7 @@ func main() {
 		as := utils.ArgSort{Args: output[ii*len : (ii+1)*len], Idxs: idxs}
 		sort.Sort(as)
 
-		if ii == 0 {
+		if false && ii == 0 {
 			pp.Println(as.Args[0])
 			pp.Println(labels[as.Idxs[0]])
 		}
