@@ -57,3 +57,30 @@ func tempFile(dir, prefix, suffix string) (name string, err error) {
 	}
 	return
 }
+
+func uint32SliceToUint(data []uint32) []uint {
+	sz := len(data)
+	res := make([]uint, sz)
+	for ii, val := range data {
+		res[ii] = uint(val)
+	}
+	return res
+}
+
+func intSliceToUint32(data []int) []uint32 {
+	sz := len(data)
+	res := make([]uint32, sz)
+	for ii, val := range data {
+		res[ii] = uint32(val)
+	}
+	return res
+}
+
+func uintSliceToUint32(data []uint) []uint32 {
+	sz := len(data)
+	res := make([]uint32, sz)
+	for ii, val := range data {
+		res[ii] = uint32(val)
+	}
+	return res
+}

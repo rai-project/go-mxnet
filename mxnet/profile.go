@@ -17,6 +17,7 @@ import (
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
 	"github.com/rai-project/config"
+	"github.com/rai-project/tracer"
 	"github.com/rai-project/tracer/chrome"
 )
 
@@ -375,7 +376,7 @@ func (p *Profile) Publish(ctx context.Context, opts ...opentracing.StartSpanOpti
 
 	// panic(p.filename)
 
-	return p.Trace.Publish(ctx, opts...)
+	return p.Trace.Publish(ctx, tracer.FRAMEWORK_TRACE, opts...)
 }
 
 func (p *Profile) addNodeMetadata(pth string) {

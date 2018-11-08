@@ -74,18 +74,20 @@ func CreatePredictor(opts ...options.Option) (*Predictor, error) {
 
 	// malloc a **char which like []string to store node keys
 	keys := C.malloc(C.size_t(len(nodes)) * C.size_t(unsafe.Sizeof(pc))) // c gc
-	j := 0
-	for i := 0; i < len(nodes); i++ {
+	jj := 0
+	for ii, nd := range nodes {
 		// get memory address
-		p := (**C.char)(unsafe.Pointer(uintptr(keys) + uintptr(i)*unsafe.Sizeof(pc)))
+		p := (**C.char)(unsafe.Pointer(uintptr(keys) + uintptr(ii)*unsafe.Sizeof(pc)))
 		// c gc
-		*p = C.CString(nodes[i].Key())
+		*p = C.CString(nd.Key())
+
+		shape := intSliceToUint32(nd.Shape())
 
 		// shapeIdx for next node
-		shapeIdx = append(shapeIdx, uint32(j+len(nodes[i].Shape())))
-		j += len(nodes[i].Shape())
+		jj += len(shape)
+		shapeIdx = append(shapeIdx, uint32(jj))
 		// shape data for current node
-		shapeData = append(shapeData, nodes[i].Shape()...)
+		shapeData = append(shapeData, shape...)
 	}
 
 	var handle C.PredictorHandle
@@ -103,101 +105,13 @@ func CreatePredictor(opts ...options.Option) (*Predictor, error) {
 	)
 
 	// free mem we created before return, go gc won't do that for us
-	for i := 0; i < len(nodes); i++ {
-		p := (**C.char)(unsafe.Pointer(uintptr(keys) + uintptr(i)*unsafe.Sizeof(pc)))
+	for ii := range nodes {
+		p := (**C.char)(unsafe.Pointer(uintptr(keys) + uintptr(ii)*unsafe.Sizeof(pc)))
 		C.free(unsafe.Pointer(*p))
 	}
 	C.free(unsafe.Pointer(keys))
 
 	if err != 0 {
-		return nil, GetLastError()
-	}
-	return &Predictor{handle: handle, options: options}, nil
-}
-
-// CreatePredictorPartial Creates a Predictor wich customized outputs [layer]
-// go binding for MXPredCreate
-// param symbol The JSON string of the symbol
-// param params In-memory raw bytes of parameter ndarray file
-// param device Device to run predictor
-// param nodes An array of InputNode which stored the name and shape data of ndarray item
-// param outputKey the name of the output layer/key
-func CreatePredictorPartial(opts ...options.Option) (*Predictor, error) {
-	var (
-		pc        *C.char
-		shapeIdx  = []uint32{0}
-		shapeData = []uint32{}
-	)
-
-	options := options.New(opts...)
-
-	if len(options.Symbol()) == 0 {
-		return nil, errors.New("invalid empty symbol")
-	}
-	if len(options.Weights()) == 0 {
-		return nil, errors.New("invalid empty weights")
-	}
-	if len(options.InputNodes()) == 0 {
-		return nil, errors.New("no input nodes found")
-	}
-	if len(options.Devices()) == 0 {
-		return nil, errors.New("no devices defined")
-	}
-	if options.OutputNode() == "" {
-		return nil, errors.New("invalid empty outputNode")
-	}
-
-	symbol := options.Symbol()
-	params := options.Weights()
-	device := options.Devices()[0]
-	nodes := options.InputNodes()
-	outputKey := options.OutputNode()
-
-	// malloc a **char which like []string to store node keys
-	keys := C.malloc(C.size_t(len(nodes)) * C.size_t(unsafe.Sizeof(pc))) // c gc
-	j := 0
-	for i := 0; i < len(nodes); i++ {
-		// get memory address
-		p := (**C.char)(unsafe.Pointer(uintptr(keys) + uintptr(i)*unsafe.Sizeof(pc)))
-		// c gc
-		*p = C.CString(nodes[i].Key())
-
-		// shapeIdx for next node
-		shapeIdx = append(shapeIdx, uint32(j+len(nodes[i].Shape())))
-		j += len(nodes[i].Shape())
-		// shape data for current node
-		shapeData = append(shapeData, nodes[i].Shape()...)
-	}
-
-	oKeys := C.malloc(C.size_t(len(nodes)) * C.size_t(unsafe.Sizeof(pc)))
-	p := (**C.char)(unsafe.Pointer(uintptr(oKeys)))
-	*p = C.CString(outputKey)
-
-	var handle C.PredictorHandle
-
-	success := C.MXPredCreatePartialOut((*C.char)(unsafe.Pointer(&symbol[0])),
-		unsafe.Pointer(&params[0]),
-		C.int(len(params)),
-		C.int(device.Type()),
-		C.int(device.ID()),
-		C.mx_uint(len(nodes)),
-		(**C.char)(keys),
-		(*C.mx_uint)(unsafe.Pointer(&shapeIdx[0])),
-		(*C.mx_uint)(unsafe.Pointer(&shapeData[0])),
-		C.mx_uint(1),
-		(**C.char)(oKeys),
-		&handle,
-	)
-
-	// free mem we created before return, go gc won't do that for us
-	for i := 0; i < len(nodes); i++ {
-		p := (**C.char)(unsafe.Pointer(uintptr(keys) + uintptr(i)*unsafe.Sizeof(pc)))
-		C.free(unsafe.Pointer(*p))
-	}
-	C.free(unsafe.Pointer(keys))
-	C.free(unsafe.Pointer(oKeys))
-
-	if success != 0 {
 		return nil, GetLastError()
 	}
 	return &Predictor{handle: handle, options: options}, nil
@@ -219,9 +133,9 @@ func (s *Predictor) SetInput(key string, data []float32) error {
 		for _, inputNode := range s.options.InputNodes() {
 			if inputNode.Key() == key {
 				if len(inputNode.Shape()) == 3 {
-					shape = inputNode.Shape()
+					shape = intSliceToUint32(inputNode.Shape())
 				} else {
-					shape = inputNode.Shape()[1:]
+					shape = intSliceToUint32(inputNode.Shape()[1:])
 				}
 			}
 		}
