@@ -14,12 +14,15 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/anthonynsimon/bild/imgio"
 	"github.com/anthonynsimon/bild/transform"
 	"github.com/k0kubun/pp"
 
 	"github.com/rai-project/config"
+	"github.com/rai-project/dlframework"
+	"github.com/rai-project/dlframework/framework/feature"
 	"github.com/rai-project/dlframework/framework/options"
 	"github.com/rai-project/downloadmanager"
 	cupti "github.com/rai-project/go-cupti"
@@ -30,11 +33,11 @@ import (
 )
 
 var (
-	batchSize    = 64
-	model        = "bvlc_alexnet"
-	graph_url    = "http://s3.amazonaws.com/store.carml.org/models/mxnet/bvlc_alexnet/bvlc_alexnet-symbol.json"
-	weights_url  = "http://s3.amazonaws.com/store.carml.org/models/mxnet/bvlc_alexnet/bvlc_alexnet-0000.params"
-	features_url = "http://data.dmlc.ml/mxnet/models/imagenet/synset.txt"
+	batchSize   = 64
+	model       = "bvlc_alexnet"
+	graph_url   = "http://s3.amazonaws.com/store.carml.org/models/mxnet/bvlc_alexnet/bvlc_alexnet-symbol.json"
+	weights_url = "http://s3.amazonaws.com/store.carml.org/models/mxnet/bvlc_alexnet/bvlc_alexnet-0000.params"
+	synset_url  = "http://data.dmlc.ml/mxnet/models/imagenet/synset.txt"
 )
 
 // convert go Image to 1-dim array
@@ -67,7 +70,7 @@ func main() {
 	dir = filepath.Join(dir, model)
 	graph := filepath.Join(dir, "bvlc_alexnet-symbol.json")
 	weights := filepath.Join(dir, "bvlc_alexnet-0000.params")
-	features := filepath.Join(dir, "synset.txt")
+	synset := filepath.Join(dir, "synset.txt")
 
 	if _, err := os.Stat(graph); os.IsNotExist(err) {
 		if _, err := downloadmanager.DownloadInto(graph_url, dir); err != nil {
@@ -80,9 +83,9 @@ func main() {
 			panic(err)
 		}
 	}
-	if _, err := os.Stat(features); os.IsNotExist(err) {
+	if _, err := os.Stat(synset); os.IsNotExist(err) {
 
-		if _, err := downloadmanager.DownloadInto(features_url, dir); err != nil {
+		if _, err := downloadmanager.DownloadInto(synset_url, dir); err != nil {
 			panic(err)
 		}
 	}
@@ -136,6 +139,11 @@ func main() {
 	}
 	defer p.Close()
 
+	err = predictor.Predict(ctx, input)
+	if err != nil {
+		panic(err)
+	}
+
 	var cu *cupti.CUPTI
 	if nvidiasmi.HasGPU {
 		cu, err = cupti.New(cupti.Context(ctx))
@@ -144,70 +152,80 @@ func main() {
 		}
 	}
 
-	/*
-	   	// define profiling options
-	   poptions := map[string]mxnet.ProfileMode{
-	   		"profile_all":        mxnet.ProfileAllEnable,
-	   		"profile_symbolic":   mxnet.ProfileSymbolicOperatorsEnable,
-	   		"profile_imperative": mxnet.ProfileImperativeOperatorsEnable,
-	   		"profile_memory":     mxnet.ProfileMemoryDisable,
-	   		"profile_api":        mxnet.ProfileApiDisable,
-	   		"contiguous_dump":    mxnet.ProfileContiguousDumpDisable,
-	   		"dump_period":        mxnet.ProfileDumpPeriod,
-	   	}
+	// define profiling options
+	poptions := map[string]mxnet.ProfileMode{
+		"profile_all":        mxnet.ProfileAllEnable,
+		"profile_symbolic":   mxnet.ProfileSymbolicOperatorsEnable,
+		"profile_imperative": mxnet.ProfileImperativeOperatorsEnable,
+		"profile_memory":     mxnet.ProfileMemoryDisable,
+		"profile_api":        mxnet.ProfileApiDisable,
+		"contiguous_dump":    mxnet.ProfileContiguousDumpDisable,
+		"dump_period":        mxnet.ProfileDumpPeriod,
+	}
 
-	   	if profile, err := mxnet.NewProfile(poptions, ""); err == nil {
-	   		profile.Start()
+	profile, err := mxnet.NewProfile(poptions, "")
+	if err != nil {
 
-	   		defer func() {
-	   			profile.Pause()
-
-	   			profile.Resume()
-
-	   			profile.Stop()
-
-	   			profile.Publish(ctx)
-	   			profile.Delete()
-	   		}()
-	   	}
-	*/
-
-	if err = predictor.Predict(ctx, input); err != nil {
 		panic(err)
 	}
+	profile.Start()
+
+	err = predictor.Predict(ctx, input)
+	if err != nil {
+		panic(err)
+	}
+
+	profile.Stop()
+	profile.Publish(ctx)
+	profile.Delete()
 
 	if nvidiasmi.HasGPU {
 		cu.Wait()
 		cu.Close()
 	}
 
-	predictions, err := predictor.ReadPredictions(ctx)
+	output, err := predictor.ReadPredictionOutput(ctx)
 	if err != nil {
 		panic(err)
 	}
 
-	if true {
-		var labels []string
-		f, err := os.Open(features)
-		if err != nil {
-			panic(err)
-		}
-		defer f.Close()
-		scanner := bufio.NewScanner(f)
-		for scanner.Scan() {
-			line := scanner.Text()
-			labels = append(labels, line)
-		}
+	var labels []string
+	f, err := os.Open(synset)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := scanner.Text()
+		labels = append(labels, line)
+	}
 
-		len := len(predictions) / batchSize
+	features := make([]dlframework.Features, batchSize)
+	featuresLen := len(output) / batchSize
+
+	for ii := 0; ii < batchSize; ii++ {
+		rprobs := make([]*dlframework.Feature, featuresLen)
+		for jj := 0; jj < featuresLen; jj++ {
+			rprobs[jj] = feature.New(
+				feature.ClassificationIndex(int32(jj)),
+				feature.ClassificationName(labels[jj]),
+				feature.Probability(output[ii*featuresLen+jj]),
+			)
+		}
+		sort.Sort(dlframework.Features(rprobs))
+		features[ii] = rprobs
+	}
+
+	if true {
 		for i := 0; i < 1; i++ {
-			res := predictions[i*len : (i+1)*len]
-			res.Sort()
-			pp.Println(res[0].Probability)
-			pp.Println(labels[res[0].Index])
+			results := features[i]
+			top1 := results[0]
+			pp.Println(top1.Probability)
+			pp.Println(top1.GetClassification().GetName())
 		}
 	} else {
-		_ = predictions
+		_ = features
 	}
 }
 

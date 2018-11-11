@@ -26,7 +26,6 @@ import (
 typedef struct MXCallbackList MXCallbackList;
 #include <mxnet/c_api.h>
 #include <stdlib.h>
-
 */
 import "C"
 
@@ -106,15 +105,6 @@ func NewProfile(profileOptions map[string]ProfileMode, tmpDir string) (*Profile,
 	fileName := string(profileOptions["filename"])
 
 	success := C.MXSetProfilerConfig(C.int(keyLen), (**C.char)(ckeys), (**C.char)(cvals))
-	// if err != nil {
-	//   if err.Error() == "no such file or directory" {
-	//     return nil, errors.Wrapf(err,
-	//       "failed to set profiler configuration the path %s was not writable",
-	//       fileName,
-	//     )
-	//   }
-	// 	return nil, errors.Wrap(err, "failed to set profiler configuration")
-	// }
 	if success != 0 {
 		return nil, errors.Wrap(GetLastError(), "failed to set profiler configuration")
 	}
@@ -356,7 +346,6 @@ func (p *Profile) Delete() error {
 }
 
 func (p *Profile) Publish(ctx context.Context, opts ...opentracing.StartSpanOption) error {
-
 	if err := p.Read(); err != nil {
 		log.WithError(err).Errorf("failed to read profile at %s", p.filename)
 		return err
@@ -367,14 +356,6 @@ func (p *Profile) Publish(ctx context.Context, opts ...opentracing.StartSpanOpti
 			p.addNodeMetadata(pth)
 		}
 	}
-
-	// bts, err := json.Marshal(p.Trace)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// com.WriteFile(p.filename, bts)
-
-	// panic(p.filename)
 
 	return p.Trace.Publish(ctx, tracer.FRAMEWORK_TRACE, opts...)
 }

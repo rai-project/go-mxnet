@@ -33,7 +33,7 @@ import (
 // predictor for inference
 type Predictor struct {
 	handle  C.PredictorHandle // C handle of predictor
-	options *options.Options
+	optionp *options.Options
 }
 
 func prod(arry []int) int {
@@ -133,12 +133,12 @@ func New(ctx context.Context, opts ...options.Option) (*Predictor, error) {
 // go binding for MXPredSetInput
 // param key The name of input node to set
 // param data The float data to be set
-func (s *Predictor) SetInput(key string, data []float32) error {
+func (p *Predictor) SetInput(key string, data []float32) error {
 	k := C.CString(key)
 	// free mem before return
 	defer C.free(unsafe.Pointer(k))
 
-	success := C.MXPredSetInput(s.handle,
+	success := C.MXPredSetInput(p.handle,
 		k,
 		(*C.mx_float)(unsafe.Pointer(&data[0])),
 		C.mx_uint(len(data)),
@@ -152,20 +152,20 @@ func (s *Predictor) SetInput(key string, data []float32) error {
 
 // run a forward pass after SetInput
 // go binding for MXPredForward
-func (s *Predictor) Forward() error {
-	success := C.MXPredForward(s.handle)
+func (p *Predictor) Forward() error {
+	success := C.MXPredForward(p.handle)
 	if success != 0 {
 		return GetLastError()
 	}
 	return nil
 }
 
-func (s *Predictor) Predict(ctx context.Context, data []float32) error {
+func (p *Predictor) Predict(ctx context.Context, data []float32) error {
 	if data == nil || len(data) < 1 {
 		return errors.New("intput data nil or empty")
 	}
 
-	inputNode := s.options.InputNodes()[0] // take the first input node
+	inputNode := p.options.InputNodes()[0] // take the first input node
 	if inputNode.Key() == "" {
 		return errors.New("expecting a valid (non-empty) input layer name")
 	}
@@ -180,20 +180,20 @@ func (s *Predictor) Predict(ctx context.Context, data []float32) error {
 	shapeLen := prod(shape)
 	dataLen := len(data)
 	inputCount := dataLen / shapeLen
-	batchSize := s.options.BatchSize()
+	batchSize := p.options.BatchSize()
 
 	if batchSize > inputCount {
 		padding := make([]float32, (batchSize-inputCount)*shapeLen)
 		data = append(data, padding...)
 	}
 
-	err := s.SetInput(inputNode.Key(), data)
+	err := p.SetInput(inputNode.Key(), data)
 	if err != nil {
 		return err
 	}
 
 	predictSpan, _ := tracer.StartSpanFromContext(ctx, tracer.MODEL_TRACE, "predict")
-	err = s.Forward()
+	err = p.Forward()
 	if err != nil {
 		return err
 	}
@@ -205,12 +205,12 @@ func (s *Predictor) Predict(ctx context.Context, data []float32) error {
 // get the shape of output node
 // go binding for MXPredGetOutputShape
 // param index The index of output node, set to 0 if there is only one output
-func (s *Predictor) GetOutputShape(index int) ([]int, error) {
+func (p *Predictor) GetOutputShape(index int) ([]int, error) {
 	var (
 		shapeData *C.mx_uint
 		shapeDim  C.mx_uint
 	)
-	success := C.MXPredGetOutputShape(s.handle,
+	success := C.MXPredGetOutputShape(p.handle,
 		C.mx_uint(index),
 		&shapeData,
 		&shapeDim,
@@ -223,54 +223,37 @@ func (s *Predictor) GetOutputShape(index int) ([]int, error) {
 	return shape, nil
 }
 
-// get the output value of prediction
-// go binding for MXPredGetOutput
-// param index The index of output node, set to 0 if there is only one output
-func (s *Predictor) GetOutput(index int) ([]float32, error) {
-	shape, err := s.GetOutputShape(index)
+// get the output of the prediction
+// index is the index of the output node, set to 0 assuming there is only one output
+func (p *Predictor) ReadPredictionProbabilites(ctx context.Context) ([]float32, error) {
+	span, _ := tracer.StartSpanFromContext(ctx, tracer.MODEL_TRACE, "read_predictions")
+	defer span.Finish()
+
+	index := 0
+
+	shape, err := p.GetOutputShape(index)
 	if err != nil {
 		return nil, err
 	}
 
 	size := prod(shape)
-	data := make([]float32, size)
-	success := C.MXPredGetOutput(s.handle,
+	probabilities := make([]float32, size)
+	success := C.MXPredGetOutput(p.handle,
 		C.mx_uint(index),
-		(*C.mx_float)(unsafe.Pointer(&data[0])),
+		(*C.mx_float)(unsafe.Pointer(&probabilities[0])),
 		C.mx_uint(size),
 	)
 	if success != 0 {
 		return nil, GetLastError()
 	}
-	return data, nil
-}
 
-func (s *Predictor) ReadPredictions(ctx context.Context) (Predictions, error) {
-	span, _ := tracer.StartSpanFromContext(ctx, tracer.MODEL_TRACE, "read_predictions")
-	defer span.Finish()
-
-	if probabilities, err := s.GetOutput(0); err != nil {
-		return nil, err
-	}
-
-	length := len(probabilities)
-	predLen := length / s.options.BatchSize
-
-	predictions := make([]Prediction, length)
-	for ii := 0; ii < length; ii++ {
-		predictions[ii] = Prediction{
-			Index:       ii % predLen,
-			Probability: float32(probabilites[ii]),
-		}
-	}
-
-	return predictions
+	return probabilities, nil
 }
 
 // free this predictor's C handle
 // go binding for MXPredFree
-func (s *Predictor) Close() error {
-	success := C.MXPredFree(s.handle)
+func (p *Predictor) Close() error {
+	success := C.MXPredFree(p.handle)
 	if success != 0 {
 		return GetLastError()
 	}
