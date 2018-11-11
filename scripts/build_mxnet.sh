@@ -20,13 +20,13 @@ cp make/config.mk . && \
 echo "USE_CUDA=1" >>config.mk
 echo "USE_CUDA_PATH = /usr/local/cuda" >> config.mk
 echo "USE_CUDNN=1" >>config.mk
-echo "CUDA_ARCH=-gencode=arch=compute_30,code=\"sm_30,compute_30\" " >> config.mk
-echo "CUDA_ARCH+=-gencode=arch=compute_35,code=\"sm_35,compute_35\" " >> config.mk
-echo "CUDA_ARCH+=-gencode=arch=compute_50,code=\"sm_50,compute_50\" " >> config.mk
-echo "CUDA_ARCH+=-gencode=arch=compute_52,code=\"sm_52,compute_52\" " >> config.mk
-echo "CUDA_ARCH+=-gencode=arch=compute_53,code=\"sm_53,compute_53\" " >> config.mk
-echo "CUDA_ARCH+=-gencode=arch=compute_60,code=\"sm_60,compute_60\" " >> config.mk
-echo "CUDA_ARCH+=-gencode=arch=compute_61,code=\"sm_61,compute_61\" " >> config.mk
+echo "CUDA_ARCH=-gencode=arch=compute_30,code=\"sm_30\" " >> config.mk
+echo "CUDA_ARCH+=-gencode=arch=compute_35,code=\"sm_35\" " >> config.mk
+echo "CUDA_ARCH+=-gencode=arch=compute_50,code=\"sm_50\" " >> config.mk
+echo "CUDA_ARCH+=-gencode=arch=compute_52,code=\"sm_52\" " >> config.mk
+echo "CUDA_ARCH+=-gencode=arch=compute_53,code=\"sm_53\" " >> config.mk
+echo "CUDA_ARCH+=-gencode=arch=compute_60,code=\"sm_60\" " >> config.mk
+echo "CUDA_ARCH+=-gencode=arch=compute_61,code=\"sm_61\" " >> config.mk
 echo "CUDA_ARCH+=-gencode=arch=compute_70,code=\"sm_70\" " >> config.mk
 echo "ADD_CFLAGS= -ftrack-macro-expansion=0" >>config.mk
 
