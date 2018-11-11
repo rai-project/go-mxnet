@@ -170,6 +170,7 @@ func (s *Predictor) Predict(ctx context.Context, data []float32) error {
 		return errors.New("expecting a valid (non-empty) input layer name")
 	}
 
+	var shape []int
 	if len(inputNode.Shape()) == 3 {
 		shape = inputNode.Shape()
 	} else {
@@ -191,7 +192,7 @@ func (s *Predictor) Predict(ctx context.Context, data []float32) error {
 		return err
 	}
 
-	span, _ := tracer.StartSpanFromContext(ctx, tracer.MODEL_TRACE, "predict")
+	predictSpan, _ := tracer.StartSpanFromContext(ctx, tracer.MODEL_TRACE, "predict")
 	err = s.Forward()
 	if err != nil {
 		return err
@@ -204,7 +205,7 @@ func (s *Predictor) Predict(ctx context.Context, data []float32) error {
 // get the shape of output node
 // go binding for MXPredGetOutputShape
 // param index The index of output node, set to 0 if there is only one output
-func (s *Predictor) GetOutputShape(index uint32) ([]uint32, error) {
+func (s *Predictor) GetOutputShape(index int) ([]int, error) {
 	var (
 		shapeData *C.mx_uint
 		shapeDim  C.mx_uint
@@ -218,14 +219,14 @@ func (s *Predictor) GetOutputShape(index uint32) ([]uint32, error) {
 		return nil, GetLastError()
 	}
 	// c array to go
-	shape := (*[1 << 32]uint32)(unsafe.Pointer(shapeData))[:shapeDim:shapeDim]
+	shape := (*[1 << 32]int)(unsafe.Pointer(shapeData))[:shapeDim:shapeDim]
 	return shape, nil
 }
 
 // get the output value of prediction
 // go binding for MXPredGetOutput
 // param index The index of output node, set to 0 if there is only one output
-func (s *Predictor) GetOutput(index uint32) ([]float32, error) {
+func (s *Predictor) GetOutput(index int) ([]float32, error) {
 	shape, err := s.GetOutputShape(index)
 	if err != nil {
 		return nil, err
