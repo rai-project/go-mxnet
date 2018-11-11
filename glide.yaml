@@ -1,7 +1,7 @@
-package: github.com/rai-project/go-mxnet-predictor
+package: github.com/rai-project/go-mxnet
 import:
-- package: github.com/anthonynsimon/bild
-  version: ^0.10.0
-  subpackages:
-  - imgio
-  - transform
+  - package: github.com/anthonynsimon/bild
+    version: ^0.10.0
+    subpackages:
+      - imgio
+      - transform

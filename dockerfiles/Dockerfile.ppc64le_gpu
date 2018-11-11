@@ -55,12 +55,12 @@ ENV LD_LIBRARY_PATH /opt/frameworks/mxnet/lib:$LD_LIBRARY_PATH
 ENV LIBRARY_PATH /opt/frameworks/mxnet/lib:$LIBRARY_PATH
 
 # Get Go bindings
-ENV PKG github.com/rai-project/go-mxnet-predictor
+ENV PKG github.com/rai-project/go-mxnet
 WORKDIR $GOPATH/src/$PKG
 
 RUN git clone --depth=1 --branch=master https://${PKG}.git . && \
-  sed -i "/prefix=/c prefix=\/opt/frameworks/mxnet" $GOPATH/src/github.com/rai-project/go-mxnet-predictor/travis/mxnet.pc && \
-  cp $GOPATH/src/github.com/rai-project/go-mxnet-predictor/travis/mxnet.pc /usr/lib/pkgconfig && \
+  sed -i "/prefix=/c prefix=\/opt/frameworks/mxnet" $GOPATH/src/github.com/rai-project/go-mxnet/travis/mxnet.pc && \
+  cp $GOPATH/src/github.com/rai-project/go-mxnet/travis/mxnet.pc /usr/lib/pkgconfig && \
   pkg-config --libs mxnet && \
   cd $GOPATH/src/$PKG && \
   dep ensure && \

@@ -1,4 +1,4 @@
-module github.com/rai-project/go-mxnet-predictor
+module github.com/rai-project/go-mxnet
 
 require (
 	github.com/GeertJohan/go-sourcepath v0.0.0-20150925135350-83e8b8723a9b

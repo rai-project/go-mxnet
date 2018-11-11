@@ -23,8 +23,8 @@ import (
 	"github.com/rai-project/downloadmanager"
 
 	"github.com/k0kubun/pp"
-	"github.com/rai-project/go-mxnet-predictor/mxnet"
-	"github.com/rai-project/go-mxnet-predictor/utils"
+	"github.com/rai-project/go-mxnet/mxnet"
+	"github.com/rai-project/go-mxnet/utils"
 
 	"github.com/rai-project/tracer"
 
