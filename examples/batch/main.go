@@ -14,27 +14,24 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"sort"
 
 	"github.com/anthonynsimon/bild/imgio"
 	"github.com/anthonynsimon/bild/transform"
+	"github.com/k0kubun/pp"
+
 	"github.com/rai-project/config"
 	"github.com/rai-project/dlframework/framework/options"
 	"github.com/rai-project/downloadmanager"
-
-	"github.com/k0kubun/pp"
+	cupti "github.com/rai-project/go-cupti"
 	"github.com/rai-project/go-mxnet/mxnet"
-	"github.com/rai-project/go-mxnet/utils"
-
+	nvidiasmi "github.com/rai-project/nvidia-smi"
 	"github.com/rai-project/tracer"
-
-	//_ "github.com/rai-project/tracer/all"
-
-	_ "github.com/rai-project/tracer/jaeger"
+	_ "github.com/rai-project/tracer/all"
 )
 
 var (
 	batchSize    = 64
+	model        = "bvlc_alexnet"
 	graph_url    = "http://s3.amazonaws.com/store.carml.org/models/mxnet/bvlc_alexnet/bvlc_alexnet-symbol.json"
 	weights_url  = "http://s3.amazonaws.com/store.carml.org/models/mxnet/bvlc_alexnet/bvlc_alexnet-0000.params"
 	features_url = "http://data.dmlc.ml/mxnet/models/imagenet/synset.txt"
@@ -64,10 +61,10 @@ func cvtImageTo1DArray(src image.Image, mean []float32) ([]float32, error) {
 }
 
 func main() {
-
 	defer tracer.Close()
 
 	dir, _ := filepath.Abs("../tmp")
+	dir = filepath.Join(dir, model)
 	graph := filepath.Join(dir, "bvlc_alexnet-symbol.json")
 	weights := filepath.Join(dir, "bvlc_alexnet-0000.params")
 	features := filepath.Join(dir, "synset.txt")
@@ -119,44 +116,34 @@ func main() {
 	}
 
 	opts := options.New()
-	inputDims := []uint32{3, 227, 227}
 
 	device := options.CPU_DEVICE
-	device = options.CUDA_DEVICE
+	if nvidiasmi.HasGPU {
+		device = options.CUDA_DEVICE
 
-	/*
-		span, ctx := tracer.StartSpanFromContext(context.Background(), tracer.FULL_TRACE, "mxnet_batch")
-		defer span.Finish()
-	*/
+	}
 
-	// create predictor
-	p, err := mxnet.CreatePredictor(
+	p, err := mxnet.New(
 		options.WithOptions(opts),
 		options.Device(device, 0),
 		options.Symbol(symbol),
 		options.Weights(params),
-		options.InputNode("data", inputDims),
-		options.BatchSize(uint32(batchSize)),
+		options.InputNode("data", []int{3, 227, 227}),
+		options.BatchSize(batchSize),
 	)
-
 	if err != nil {
 		panic(err)
 	}
 	defer p.Close()
 
-	if err := p.SetInput("data", input); err != nil {
-		panic(err)
+	var cu *cupti.CUPTI
+	if nvidiasmi.HasGPU {
+		cu, err = cupti.New(cupti.Context(ctx))
+		if err != nil {
+			panic(err)
+		}
 	}
 
-	// if nvidiasmi.HasGPU {
-	// 	cu, err := cupti.New(cupti.Context(ctx))
-	// 	if err == nil {
-	// 		defer func() {
-	// 			cu.Wait()
-	// 			cu.Close()
-	// 		}()
-	// 	}
-	// }
 	/*
 	   	// define profiling options
 	   poptions := map[string]mxnet.ProfileMode{
@@ -184,51 +171,44 @@ func main() {
 	   		}()
 	   	}
 	*/
-	if err := p.Forward(); err != nil {
+
+	if err = predictor.Predict(ctx, input); err != nil {
 		panic(err)
 	}
 
-	C.cudaProfilerStart()
-	// do predict
-	if err = p.Forward(); err != nil {
-		panic(err)
+	if nvidiasmi.HasGPU {
+		cu.Wait()
+		cu.Close()
 	}
 
-	// get predict result
-	output, err := p.GetOutput(0)
+	predictions, err := predictor.ReadPredictions(ctx)
 	if err != nil {
 		panic(err)
 	}
-	C.cudaProfilerStop()
 
-	var labels []string
-	f, err := os.Open(features)
-	if err != nil {
-		os.Exit(-1)
-	}
-	defer f.Close()
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		line := scanner.Text()
-		labels = append(labels, line)
-	}
-
-	len := len(output) / batchSize
-	for ii := 0; ii < batchSize; ii++ {
-		idxs := make([]int, len)
-		for jj := 0; jj < len; jj++ {
-			idxs[jj] = jj
+	if true {
+		var labels []string
+		f, err := os.Open(features)
+		if err != nil {
+			panic(err)
 		}
-		as := utils.ArgSort{Args: output[ii*len : (ii+1)*len], Idxs: idxs}
-		sort.Sort(as)
-
-		if ii == 0 {
-			pp.Println(as.Args[0])
-			pp.Println(labels[as.Idxs[0]])
+		defer f.Close()
+		scanner := bufio.NewScanner(f)
+		for scanner.Scan() {
+			line := scanner.Text()
+			labels = append(labels, line)
 		}
-	}
 
-	// os.RemoveAll(dir)
+		len := len(predictions) / batchSize
+		for i := 0; i < 1; i++ {
+			res := predictions[i*len : (i+1)*len]
+			res.Sort()
+			pp.Println(res[0].Probability)
+			pp.Println(labels[res[0].Index])
+		}
+	} else {
+		_ = predictions
+	}
 }
 
 func init() {

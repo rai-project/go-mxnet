@@ -1,4 +1,4 @@
-// Copyright 2016 go-mxnet Authors. All Rights Reserved.
+// Copyright 2016 go-mxnet-predictor Authors. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,12 +21,13 @@ package mxnet
 */
 import "C"
 import (
-	"fmt"
+	"context"
 	"unsafe"
 
 	"github.com/pkg/errors"
 	"github.com/rai-project/dlframework/framework/options"
 	nvidiasmi "github.com/rai-project/nvidia-smi"
+	"github.com/rai-project/tracer"
 )
 
 // predictor for inference
@@ -35,13 +36,24 @@ type Predictor struct {
 	options *options.Options
 }
 
+func prod(arry []int) int {
+	accum := int(1)
+	for _, e := range arry {
+		accum *= int(e)
+	}
+	return accum
+}
+
 // Create a Predictor
 // go binding for MXPredCreate
 // param symbol The JSON string of the symbol
 // param params In-memory raw bytes of parameter ndarray file
 // param device Device to run predictor
 // param nodes An array of InputNode which stored the name and shape data of ndarray item
-func CreatePredictor(opts ...options.Option) (*Predictor, error) {
+func New(ctx context.Context, opts ...options.Option) (*Predictor, error) {
+	span, _ := tracer.StartSpanFromContext(ctx, tracer.MODEL_TRACE, "new")
+	defer span.Finish()
+
 	var (
 		pc        *C.char
 		shapeIdx  = []uint32{0}
@@ -122,33 +134,6 @@ func CreatePredictor(opts ...options.Option) (*Predictor, error) {
 // param key The name of input node to set
 // param data The float data to be set
 func (s *Predictor) SetInput(key string, data []float32) error {
-	// check input
-	if data == nil || len(data) < 1 {
-		return fmt.Errorf("intput data nil or empty")
-	}
-
-	batchSize := int64(s.options.BatchSize())
-	if batchSize != 1 {
-		var shape []uint32
-		for _, inputNode := range s.options.InputNodes() {
-			if inputNode.Key() == key {
-				if len(inputNode.Shape()) == 3 {
-					shape = intSliceToUint32(inputNode.Shape())
-				} else {
-					shape = intSliceToUint32(inputNode.Shape()[1:])
-				}
-			}
-		}
-		if len(shape) != 3 {
-			return errors.New("invalid input shape")
-		}
-		dataLen := int64(len(data))
-		shapeLen := int64(shape[0]) * int64(shape[1]) * int64(shape[2])
-		inputCount := dataLen / shapeLen
-		padding := make([]float32, (batchSize-inputCount)*shapeLen)
-		data = append(data, padding...)
-	}
-
 	k := C.CString(key)
 	// free mem before return
 	defer C.free(unsafe.Pointer(k))
@@ -172,6 +157,47 @@ func (s *Predictor) Forward() error {
 	if success != 0 {
 		return GetLastError()
 	}
+	return nil
+}
+
+func (s *Predictor) Predict(ctx context.Context, data []float32) error {
+	if data == nil || len(data) < 1 {
+		return errors.New("intput data nil or empty")
+	}
+
+	inputNode := s.options.InputNodes()[0] // take the first input node
+	if inputNode.Key() == "" {
+		return errors.New("expecting a valid (non-empty) input layer name")
+	}
+
+	if len(inputNode.Shape()) == 3 {
+		shape = inputNode.Shape()
+	} else {
+		shape = inputNode.Shape()[1:]
+	}
+
+	shapeLen := prod(shape)
+	dataLen := len(data)
+	inputCount := dataLen / shapeLen
+	batchSize := s.options.BatchSize()
+
+	if batchSize > inputCount {
+		padding := make([]float32, (batchSize-inputCount)*shapeLen)
+		data = append(data, padding...)
+	}
+
+	err := s.SetInput(inputNode.Key(), data)
+	if err != nil {
+		return err
+	}
+
+	span, _ := tracer.StartSpanFromContext(ctx, tracer.MODEL_TRACE, "predict")
+	err = s.Forward()
+	if err != nil {
+		return err
+	}
+	predictSpan.Finish()
+
 	return nil
 }
 
@@ -204,10 +230,8 @@ func (s *Predictor) GetOutput(index uint32) ([]float32, error) {
 	if err != nil {
 		return nil, err
 	}
-	size := uint32(1)
-	for _, v := range shape {
-		size *= v
-	}
+
+	size := prod(shape)
 	data := make([]float32, size)
 	success := C.MXPredGetOutput(s.handle,
 		C.mx_uint(index),
@@ -218,6 +242,28 @@ func (s *Predictor) GetOutput(index uint32) ([]float32, error) {
 		return nil, GetLastError()
 	}
 	return data, nil
+}
+
+func (s *Predictor) ReadPredictions(ctx context.Context) (Predictions, error) {
+	span, _ := tracer.StartSpanFromContext(ctx, tracer.MODEL_TRACE, "read_predictions")
+	defer span.Finish()
+
+	if probabilities, err := s.GetOutput(0); err != nil {
+		return nil, err
+	}
+
+	length := len(probabilities)
+	predLen := length / s.options.BatchSize
+
+	predictions := make([]Prediction, length)
+	for ii := 0; ii < length; ii++ {
+		predictions[ii] = Prediction{
+			Index:       ii % predLen,
+			Probability: float32(probabilites[ii]),
+		}
+	}
+
+	return predictions
 }
 
 // free this predictor's C handle
