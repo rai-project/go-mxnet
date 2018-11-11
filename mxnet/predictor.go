@@ -33,7 +33,7 @@ import (
 // predictor for inference
 type Predictor struct {
 	handle  C.PredictorHandle // C handle of predictor
-	optionp *options.Options
+	options *options.Options
 }
 
 func prod(arry []int) int {
@@ -207,8 +207,8 @@ func (p *Predictor) Predict(ctx context.Context, data []float32) error {
 // param index The index of output node, set to 0 if there is only one output
 func (p *Predictor) GetOutputShape(index int) ([]int, error) {
 	var (
-		shapeData *C.mx_uint
-		shapeDim  C.mx_uint
+		shapeData *C.mx_uint = nil
+		shapeDim  C.mx_uint  = 0
 	)
 	success := C.MXPredGetOutputShape(p.handle,
 		C.mx_uint(index),
@@ -219,13 +219,17 @@ func (p *Predictor) GetOutputShape(index int) ([]int, error) {
 		return nil, GetLastError()
 	}
 	// c array to go
-	shape := (*[1 << 32]int)(unsafe.Pointer(shapeData))[:shapeDim:shapeDim]
-	return shape, nil
+	shape := (*[1 << 32]C.mx_uint)(unsafe.Pointer(shapeData))[:shapeDim:shapeDim]
+	res := make([]int, shapeDim)
+	for ii, s := range shape {
+		res[ii] = int(s)
+	}
+	return res, nil
 }
 
 // get the output of the prediction
 // index is the index of the output node, set to 0 assuming there is only one output
-func (p *Predictor) ReadPredictionProbabilites(ctx context.Context) ([]float32, error) {
+func (p *Predictor) ReadPredictionOutput(ctx context.Context) ([]float32, error) {
 	span, _ := tracer.StartSpanFromContext(ctx, tracer.MODEL_TRACE, "read_predictions")
 	defer span.Finish()
 

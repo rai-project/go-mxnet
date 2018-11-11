@@ -2,7 +2,6 @@ package mxnet
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -14,6 +13,7 @@ import (
 	"context"
 
 	"github.com/Unknwon/com"
+	"github.com/k0kubun/pp"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
 	"github.com/rai-project/config"
@@ -49,19 +49,18 @@ type ProfileMode string
 
 // profile options
 var (
-	ProfileAllDisable                 = ProfileMode(fmt.Sprintf("%d", 0))
-	ProfileSymbolicOperatorsDisable   = ProfileMode(fmt.Sprintf("%d", 0))
-	ProfileImperativeOperatorsDisable = ProfileMode(fmt.Sprintf("%d", 0))
-	ProfileMemoryDisable              = ProfileMode(fmt.Sprintf("%d", 0))
-	ProfileApiDisable                 = ProfileMode(fmt.Sprintf("%d", 0))
-	ProfileContiguousDumpDisable      = ProfileMode(fmt.Sprintf("%d", 0))
-	ProfileAllEnable                  = ProfileMode(fmt.Sprintf("%d", 1))
-	ProfileSymbolicOperatorsEnable    = ProfileMode(fmt.Sprintf("%d", 1))
-	ProfileImperativeOperatorsEnable  = ProfileMode(fmt.Sprintf("%d", 1))
-	ProfileMemoryEnable               = ProfileMode(fmt.Sprintf("%d", 1))
-	ProfileApiEnable                  = ProfileMode(fmt.Sprintf("%d", 1))
-	ProfileContiguousDumpEnable       = ProfileMode(fmt.Sprintf("%d", 1))
-	ProfileDumpPeriod                 = ProfileMode(fmt.Sprintf("%d", 1))
+	ProfileAllDisable                 = ProfileMode("false")
+	ProfileSymbolicOperatorsDisable   = ProfileMode("false")
+	ProfileImperativeOperatorsDisable = ProfileMode("false")
+	ProfileMemoryDisable              = ProfileMode("false")
+	ProfileApiDisable                 = ProfileMode("false")
+	ProfileContinuousDumpDisable      = ProfileMode("false")
+	ProfileAllEnable                  = ProfileMode("true")
+	ProfileSymbolicOperatorsEnable    = ProfileMode("true")
+	ProfileImperativeOperatorsEnable  = ProfileMode("true")
+	ProfileMemoryEnable               = ProfileMode("true")
+	ProfileApiEnable                  = ProfileMode("true")
+	ProfileContinuousDumpEnable       = ProfileMode("true")
 )
 
 // go binding for MXSetProfilerConfig()
@@ -70,9 +69,9 @@ var (
 func NewProfile(profileOptions map[string]ProfileMode, tmpDir string) (*Profile, error) {
 
 	// convert go data structures into c data structures
-	ckeys := C.malloc(C.size_t(8) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	ckeys := C.malloc(C.size_t(64) * C.size_t(unsafe.Sizeof(uintptr(0))))
 	a := (*[1<<30 - 1]*C.char)(ckeys)
-	cvals := C.malloc(C.size_t(8) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	cvals := C.malloc(C.size_t(64) * C.size_t(unsafe.Sizeof(uintptr(0))))
 	b := (*[1<<30 - 1]*C.char)(cvals)
 	keyLen := 0
 	for k, v := range profileOptions {
@@ -104,12 +103,22 @@ func NewProfile(profileOptions map[string]ProfileMode, tmpDir string) (*Profile,
 
 	fileName := string(profileOptions["filename"])
 
+	for ii := 0; ii < keyLen; ii++ {
+		ai := C.GoString(a[ii])
+		bi := C.GoString(b[ii])
+		pp.Println(ai, " = ", bi)
+	}
+
 	success := C.MXSetProfilerConfig(C.int(keyLen), (**C.char)(ckeys), (**C.char)(cvals))
 	if success != 0 {
 		return nil, errors.Wrap(GetLastError(), "failed to set profiler configuration")
 	}
 
 	// free C pointers
+	for ii := 0; ii < keyLen; ii++ {
+		C.free(unsafe.Pointer(a[ii]))
+		C.free(unsafe.Pointer(b[ii]))
+	}
 	C.free(unsafe.Pointer(ckeys))
 	C.free(unsafe.Pointer(cvals))
 
@@ -275,6 +284,7 @@ func (p *Profile) Read() error {
 	if !com.IsFile(p.filename) {
 		return errors.Errorf("unable to read profile because %v does not exist", p.filename)
 	}
+	pp.Println(p.filename)
 	bts, err := ioutil.ReadFile(p.filename)
 	if err != nil {
 		return errors.Wrapf(err, "unable to read file %s", p.filename)
@@ -342,7 +352,7 @@ func (p *Profile) Delete() error {
 		return nil
 	}
 
-	return os.Remove(p.filename)
+	return nil //os.Remove(p.filename)
 }
 
 func (p *Profile) Publish(ctx context.Context, opts ...opentracing.StartSpanOption) error {

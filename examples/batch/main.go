@@ -9,6 +9,7 @@ import "C"
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"image"
 	"io/ioutil"
@@ -126,7 +127,13 @@ func main() {
 
 	}
 
-	p, err := mxnet.New(
+	ctx := context.Background()
+
+	span, ctx := tracer.StartSpanFromContext(ctx, tracer.FULL_TRACE, "mxnet_batch")
+	defer span.Finish()
+
+	predictor, err := mxnet.New(
+		ctx,
 		options.WithOptions(opts),
 		options.Device(device, 0),
 		options.Symbol(symbol),
@@ -137,7 +144,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer p.Close()
+	defer predictor.Close()
 
 	err = predictor.Predict(ctx, input)
 	if err != nil {
@@ -154,13 +161,13 @@ func main() {
 
 	// define profiling options
 	poptions := map[string]mxnet.ProfileMode{
-		"profile_all":        mxnet.ProfileAllEnable,
-		"profile_symbolic":   mxnet.ProfileSymbolicOperatorsEnable,
-		"profile_imperative": mxnet.ProfileImperativeOperatorsEnable,
-		"profile_memory":     mxnet.ProfileMemoryDisable,
-		"profile_api":        mxnet.ProfileApiDisable,
-		"contiguous_dump":    mxnet.ProfileContiguousDumpDisable,
-		"dump_period":        mxnet.ProfileDumpPeriod,
+		"profile_all":      mxnet.ProfileAllEnable,
+		"profile_symbolic": mxnet.ProfileSymbolicOperatorsDisable,
+		// "profile_imperative": mxnet.ProfileImperativeOperatorsDisable,
+		// "profile_memory":     mxnet.ProfileMemoryDisable,
+		// "profile_api": mxnet.ProfileApiDisable,
+		"continuous_dump": mxnet.ProfileContinuousDumpEnable,
+		// "dump_period":        mxnet.ProfileDumpPeriod,
 	}
 
 	profile, err := mxnet.NewProfile(poptions, "")
