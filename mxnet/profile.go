@@ -157,6 +157,7 @@ func (p *Profile) Stop() error {
 	defer func() {
 		p.stopped = true
 	}()
+	WaitAll()
 	p.endTime = time.Now()
 	success, err := C.MXSetProfilerState(C.int(0))
 	if err != nil {

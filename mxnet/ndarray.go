@@ -157,3 +157,11 @@ func (s *NDList) Free() error {
 	}
 	return nil
 }
+
+func WaitAll() error {
+	success := C.MXNDArrayWaitAll()
+	if success != 0 {
+		return GetLastError()
+	}
+	return nil
+}
