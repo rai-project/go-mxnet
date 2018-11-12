@@ -17,6 +17,7 @@ package mxnet
 /*
 // go preamble
 #include <mxnet/c_predict_api.h>
+#include <mxnet/c_api.h>
 #include <stdlib.h>
 */
 import "C"
