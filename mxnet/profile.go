@@ -353,7 +353,7 @@ func (p *Profile) Delete() error {
 		return nil
 	}
 
-	return nil //os.Remove(p.filename)
+	return os.Remove(p.filename)
 }
 
 func (p *Profile) Publish(ctx context.Context, opts ...opentracing.StartSpanOption) error {

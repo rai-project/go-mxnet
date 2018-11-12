@@ -161,13 +161,14 @@ func main() {
 
 	// define profiling options
 	poptions := map[string]mxnet.ProfileMode{
-		"profile_all":      mxnet.ProfileAllEnable,
-		"profile_symbolic": mxnet.ProfileSymbolicOperatorsDisable,
+		"profile_all": mxnet.ProfileAllEnable,
+		// "profile_symbolic": mxnet.ProfileSymbolicOperatorsDisable,
 		// "profile_imperative": mxnet.ProfileImperativeOperatorsDisable,
 		// "profile_memory":     mxnet.ProfileMemoryDisable,
 		// "profile_api": mxnet.ProfileApiDisable,
-		"continuous_dump": mxnet.ProfileContinuousDumpEnable,
+		// "continuous_dump": mxnet.ProfileContinuousDumpEnable,
 		// "dump_period":        mxnet.ProfileDumpPeriod,
+		"aggregate_stats": "true",
 	}
 
 	profile, err := mxnet.NewProfile(poptions, "")
@@ -183,7 +184,9 @@ func main() {
 	}
 
 	profile.Stop()
+	// time.Sleep(1 * time.Second)
 	profile.Publish(ctx)
+	// time.Sleep(1 * time.Second)
 	profile.Delete()
 
 	if nvidiasmi.HasGPU {
