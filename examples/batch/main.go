@@ -130,7 +130,7 @@ func main() {
 	ctx := context.Background()
 
 	span, ctx := tracer.StartSpanFromContext(ctx, tracer.FULL_TRACE, "mxnet_batch")
-	defer span.Finish()
+	// defer span.Finish()
 
 	predictor, err := mxnet.New(
 		ctx,
@@ -151,8 +151,9 @@ func main() {
 		panic(err)
 	}
 
+	enableCupti := false
 	var cu *cupti.CUPTI
-	if nvidiasmi.HasGPU {
+	if enableCupti && nvidiasmi.HasGPU {
 		cu, err = cupti.New(cupti.Context(ctx))
 		if err != nil {
 			panic(err)
@@ -160,18 +161,16 @@ func main() {
 	}
 
 	// define profiling options
-	poptions := map[string]mxnet.ProfileMode{
-		"profile_all": mxnet.ProfileAllEnable,
-		// "profile_symbolic": mxnet.ProfileSymbolicOperatorsDisable,
-		// "profile_imperative": mxnet.ProfileImperativeOperatorsDisable,
-		// "profile_memory":     mxnet.ProfileMemoryDisable,
-		// "profile_api": mxnet.ProfileApiDisable,
-		// "continuous_dump": mxnet.ProfileContinuousDumpEnable,
-		// "dump_period":        mxnet.ProfileDumpPeriod,
-		"aggregate_stats": "true",
+	profileOptions := map[string]mxnet.ProfileMode{
+		"profile_all":        mxnet.ProfileAllDisable,
+		"profile_symbolic":   mxnet.ProfileSymbolicOperatorsEnable,
+		"profile_imperative": mxnet.ProfileImperativeOperatorsDisable,
+		"profile_memory":     mxnet.ProfileMemoryDisable,
+		"profile_api":        mxnet.ProfileApiDisable,
+		"continuous_dump":    mxnet.ProfileContinuousDumpDisable,
 	}
 
-	profile, err := mxnet.NewProfile(poptions, "")
+	profile, err := mxnet.NewProfile(profileOptions, "")
 	if err != nil {
 
 		panic(err)
@@ -189,7 +188,7 @@ func main() {
 	// time.Sleep(1 * time.Second)
 	profile.Delete()
 
-	if nvidiasmi.HasGPU {
+	if enableCupti && nvidiasmi.HasGPU {
 		cu.Wait()
 		cu.Close()
 	}
@@ -198,6 +197,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	span.Finish()
 
 	var labels []string
 	f, err := os.Open(synset)

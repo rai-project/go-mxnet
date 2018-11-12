@@ -13,7 +13,6 @@ import (
 	"context"
 
 	"github.com/Unknwon/com"
-	"github.com/k0kubun/pp"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
 	"github.com/rai-project/config"
@@ -102,13 +101,6 @@ func NewProfile(profileOptions map[string]ProfileMode, tmpDir string) (*Profile,
 	}
 
 	fileName := string(profileOptions["filename"])
-
-	for ii := 0; ii < keyLen; ii++ {
-		ai := C.GoString(a[ii])
-		bi := C.GoString(b[ii])
-		pp.Println(ai, " = ", bi)
-	}
-
 	success := C.MXSetProfilerConfig(C.int(keyLen), (**C.char)(ckeys), (**C.char)(cvals))
 	if success != 0 {
 		return nil, errors.Wrap(GetLastError(), "failed to set profiler configuration")
@@ -285,7 +277,6 @@ func (p *Profile) Read() error {
 	if !com.IsFile(p.filename) {
 		return errors.Errorf("unable to read profile because %v does not exist", p.filename)
 	}
-	pp.Println(p.filename)
 	bts, err := ioutil.ReadFile(p.filename)
 	if err != nil {
 		return errors.Wrapf(err, "unable to read file %s", p.filename)
@@ -314,7 +305,8 @@ func (p *Profile) process() {
 	minTime := int64(0)
 	events := []chrome.TraceEvent{}
 	for _, event := range p.Trace.TraceEvents {
-		if event.EventType != "B" && event.EventType != "E" {
+		eventType := strings.ToUpper(event.EventType)
+		if eventType != "B" && eventType != "E" {
 			continue
 		}
 		t := initTime.Add(time.Duration(event.Timestamp) * timeUnit)
@@ -322,7 +314,7 @@ func (p *Profile) process() {
 			continue
 		}
 		events = append(events, event)
-		if event.EventType != "B" {
+		if eventType != "B" {
 			continue
 		}
 		if minTime != 0 && minTime < event.Timestamp {
@@ -352,7 +344,6 @@ func (p *Profile) Delete() error {
 	if !com.IsFile(p.filename) {
 		return nil
 	}
-
 	return os.Remove(p.filename)
 }
 
@@ -409,4 +400,12 @@ func (p *Profile) addNodeMetadata(pth string) {
 		events = append(events, event)
 	}
 	p.Trace.TraceEvents = events
+}
+
+func WaitAll() error {
+	success := C.MXNDArrayWaitAll()
+	if success != 0 {
+		return GetLastError()
+	}
+	return nil
 }

@@ -17,7 +17,6 @@ package mxnet
 /*
 // go preamble
 #include <mxnet/c_predict_api.h>
-#include <mxnet/c_api.h>
 #include <stdlib.h>
 */
 import "C"
@@ -154,14 +153,6 @@ func (s *NDList) Free() error {
 	if err != nil {
 		return err
 	} else if success < 0 {
-		return GetLastError()
-	}
-	return nil
-}
-
-func WaitAll() error {
-	success := C.MXNDArrayWaitAll()
-	if success != 0 {
 		return GetLastError()
 	}
 	return nil
