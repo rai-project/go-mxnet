@@ -297,7 +297,6 @@ func (p *Profile) Read() error {
 }
 
 func (p *Profile) process() {
-
 	timeUnit := time.Microsecond
 
 	start := p.startTime

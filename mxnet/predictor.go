@@ -51,7 +51,7 @@ func prod(arry []int) int {
 // param device Device to run predictor
 // param nodes An array of InputNode which stored the name and shape data of ndarray item
 func New(ctx context.Context, opts ...options.Option) (*Predictor, error) {
-	span, _ := tracer.StartSpanFromContext(ctx, tracer.MODEL_TRACE, "new")
+	span, _ := tracer.StartSpanFromContext(ctx, tracer.MODEL_TRACE, "c_new")
 	defer span.Finish()
 
 	var (
@@ -192,12 +192,12 @@ func (p *Predictor) Predict(ctx context.Context, data []float32) error {
 		return err
 	}
 
-	predictSpan, _ := tracer.StartSpanFromContext(ctx, tracer.MODEL_TRACE, "predict")
+	span, _ := tracer.StartSpanFromContext(ctx, tracer.MODEL_TRACE, "c_predict")
 	err = p.Forward()
 	if err != nil {
 		return err
 	}
-	predictSpan.Finish()
+	span.Finish()
 
 	return nil
 }
@@ -230,7 +230,7 @@ func (p *Predictor) GetOutputShape(index int) ([]int, error) {
 // get the output of the prediction
 // index is the index of the output node, set to 0 assuming there is only one output
 func (p *Predictor) ReadPredictionOutput(ctx context.Context) ([]float32, error) {
-	span, _ := tracer.StartSpanFromContext(ctx, tracer.MODEL_TRACE, "read_predictions")
+	span, _ := tracer.StartSpanFromContext(ctx, tracer.MODEL_TRACE, "c_read_prediction_output")
 	defer span.Finish()
 
 	index := 0

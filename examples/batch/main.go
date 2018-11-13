@@ -183,9 +183,7 @@ func main() {
 	}
 
 	profile.Stop()
-	// time.Sleep(1 * time.Second)
 	profile.Publish(ctx)
-	// time.Sleep(1 * time.Second)
 	profile.Delete()
 
 	if enableCupti && nvidiasmi.HasGPU {
