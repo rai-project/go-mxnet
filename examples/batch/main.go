@@ -1,12 +1,5 @@
 package main
 
-// #cgo linux CFLAGS: -I/usr/local/cuda/include
-// #cgo linux LDFLAGS: -lcuda -lcudart -L/usr/local/cuda/lib64
-// #include <cuda.h>
-// #include <cuda_runtime.h>
-// #include <cuda_profiler_api.h>
-import "C"
-
 import (
 	"bufio"
 	"context"
@@ -231,7 +224,7 @@ func main() {
 			results := features[i]
 			top1 := results[0]
 			pp.Println(top1.Probability)
-			pp.Println(top1.GetClassification().GetName())
+			pp.Println(top1.GetClassification().GetLabel())
 		}
 	} else {
 		_ = features

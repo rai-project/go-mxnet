@@ -1,15 +1,18 @@
+#!/bin/sh
+
 FRAMEWORK_VERSION=1.3.0
+MXNET_SRC_DIR=$HOME/code/mxnet
+MXNET_DIST_DIR=/opt/mxnet
 
-SRC_DIR=$HOME/code/mxnet
-DIST_DIR=/opt/mxnet
+if [ ! -d "$MXNET_SRC_DIR" ]; then
+  git clone --single-branch --depth 1 --branch $FRAMEWORK_VERSION --recursive https://github.com/apache/incubator-mxnet $MXNET_SRC_DIR
+fi
 
-mkdir -p $DIST_DIR
+if [ ! -d "$MXNET_DIST_DIR" ]; then
+  mkdir -p $MXNET_DIST_DIR
+fi
 
-git clone --single-branch --depth 1 --branch $FRAMEWORK_VERSION --recursive https://github.com/apache/incubator-mxnet $SRC_DIR
-
-cd $SRC_DIR
-
-cp make/config.mk . && \
+cd $MXNET_SRC_DIR && cp make/config.mk . && \
   echo "USE_BLAS=openblas" >>config.mk && \
   echo "USE_CPP_PACKAGE=1" >>config.mk && \
   echo "ADD_CFLAGS=-I/usr/include/openblas -Wno-strict-aliasing -Wno-sign-compare  -Wno-misleading-indentation -I/usr/local/cuda/include" >>config.mk  && \
@@ -30,10 +33,7 @@ echo "CUDA_ARCH+=-gencode=arch=compute_61,code=\"sm_61\" " >> config.mk
 echo "CUDA_ARCH+=-gencode=arch=compute_70,code=\"sm_70\" " >> config.mk
 echo "ADD_CFLAGS= -ftrack-macro-expansion=0" >>config.mk
 
-make -j8 PREFIX=$DIST_DIR
+make -j"$(nproc)" PREFIX=$MXNET_DIST_DIR
 
-cp -r include $DIST_DIR/
-cp -r lib $DIST_DIR/
-
-export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=$DIST_DIR/lib:$LD_LIBRARY_PATH
+cp -r include $MXNET_DIST_DIR/
+cp -r lib $MXNET_DIST_DIR/
