@@ -1,5 +1,12 @@
 package main
 
+// #cgo linux CFLAGS: -I/usr/local/cuda/include
+// #cgo linux LDFLAGS: -lcuda -lcudart -L/usr/local/cuda/lib64
+// #include <cuda.h>
+// #include <cuda_runtime.h>
+// #include <cuda_profiler_api.h>
+import "C"
+
 import (
 	"bufio"
 	"context"
@@ -19,10 +26,8 @@ import (
 	"github.com/rai-project/dlframework/framework/feature"
 	"github.com/rai-project/dlframework/framework/options"
 	"github.com/rai-project/downloadmanager"
-	cupti "github.com/rai-project/go-cupti"
 	"github.com/rai-project/go-mxnet/mxnet"
 	nvidiasmi "github.com/rai-project/nvidia-smi"
-	"github.com/rai-project/tracer"
 	_ "github.com/rai-project/tracer/all"
 )
 
@@ -58,8 +63,6 @@ func cvtImageTo1DArray(src image.Image, mean []float32) ([]float32, error) {
 }
 
 func main() {
-	defer tracer.Close()
-
 	dir, _ := filepath.Abs("../tmp")
 	dir = filepath.Join(dir, model)
 	graph := filepath.Join(dir, "bvlc_alexnet-symbol.json")
@@ -122,9 +125,6 @@ func main() {
 
 	ctx := context.Background()
 
-	span, ctx := tracer.StartSpanFromContext(ctx, tracer.FULL_TRACE, "mxnet_batch")
-	defer span.Finish()
-
 	predictor, err := mxnet.New(
 		ctx,
 		options.WithOptions(opts),
@@ -144,52 +144,20 @@ func main() {
 		panic(err)
 	}
 
-	enableCupti := false
-	var cu *cupti.CUPTI
-	if enableCupti && nvidiasmi.HasGPU {
-		cu, err = cupti.New(cupti.Context(ctx))
-		if err != nil {
-			panic(err)
-		}
-	}
-
-	// define profiling options
-	profileOptions := map[string]mxnet.ProfileMode{
-		"profile_all":        mxnet.ProfileAllDisable,
-		"profile_symbolic":   mxnet.ProfileSymbolicOperatorsEnable,
-		"profile_imperative": mxnet.ProfileImperativeOperatorsDisable,
-		"profile_memory":     mxnet.ProfileMemoryDisable,
-		"profile_api":        mxnet.ProfileApiDisable,
-		"continuous_dump":    mxnet.ProfileContinuousDumpDisable,
-	}
-
-	profile, err := mxnet.NewProfile(profileOptions, "")
-	if err != nil {
-
-		panic(err)
-	}
-	profile.Start()
+	C.cudaProfilerStart()
 
 	err = predictor.Predict(ctx, input)
 	if err != nil {
 		panic(err)
 	}
 
-	profile.Stop()
-	profile.Publish(ctx)
-	profile.Delete()
-
-	if enableCupti && nvidiasmi.HasGPU {
-		cu.Wait()
-		cu.Close()
-	}
+	C.cudaDeviceSynchronize()
+	C.cudaProfilerStop()
 
 	output, err := predictor.ReadPredictionOutput(ctx)
 	if err != nil {
 		panic(err)
 	}
-
-	// span.Finish()
 
 	var labels []string
 	f, err := os.Open(synset)

@@ -92,11 +92,8 @@ func NewProfile(profileOptions map[string]ProfileMode, tmpDir string) (*Profile,
 
 		profileOptions["filename"] = ProfileMode(filename)
 
-		cs := C.CString(filename)
-		defer C.free(unsafe.Pointer(cs))
-
 		a[keyLen] = C.CString("filename")
-		b[keyLen] = cs
+		b[keyLen] = C.CString(filename)
 		keyLen++
 	}
 
