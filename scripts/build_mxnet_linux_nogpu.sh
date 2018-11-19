@@ -18,20 +18,9 @@ cd $MXNET_SRC_DIR && cp make/config.mk . && \
   echo "ADD_CFLAGS=-I/usr/include/openblas -Wno-strict-aliasing -Wno-sign-compare  -Wno-misleading-indentation -I/usr/local/cuda/include" >>config.mk  && \
   echo "ADD_LDFLAGS=-L/usr/local/cuda/lib64" >>config.mk && \
   echo "USE_PROFILER=1" >>config.mk && \
-  echo "USE_OPENCV=0" >>config.mk
-
-echo "USE_CUDA=1" >>config.mk
-echo "USE_CUDA_PATH = /usr/local/cuda" >> config.mk
-echo "USE_CUDNN=1" >>config.mk
-echo "CUDA_ARCH=-gencode=arch=compute_30,code=\"sm_30\" " >> config.mk
-echo "CUDA_ARCH+=-gencode=arch=compute_35,code=\"sm_35\" " >> config.mk
-echo "CUDA_ARCH+=-gencode=arch=compute_50,code=\"sm_50\" " >> config.mk
-echo "CUDA_ARCH+=-gencode=arch=compute_52,code=\"sm_52\" " >> config.mk
-echo "CUDA_ARCH+=-gencode=arch=compute_53,code=\"sm_53\" " >> config.mk
-echo "CUDA_ARCH+=-gencode=arch=compute_60,code=\"sm_60\" " >> config.mk
-echo "CUDA_ARCH+=-gencode=arch=compute_61,code=\"sm_61\" " >> config.mk
-echo "CUDA_ARCH+=-gencode=arch=compute_70,code=\"sm_70\" " >> config.mk
-echo "ADD_CFLAGS= -ftrack-macro-expansion=0" >>config.mk
+  echo "USE_OPENCV=0" >>config.mk \
+  echo "USE_CUDA=0" >>config.mk && \
+  echo "USE_CUDNN=0" >>config.mk
 
 make -j"$(nproc)" PREFIX=$MXNET_DIST_DIR
 
