@@ -63,9 +63,7 @@ RUN git clone --depth=1 --branch=master https://${PKG}.git . && \
   cp $GOPATH/src/github.com/rai-project/go-mxnet/travis/mxnet.pc /usr/lib/pkgconfig && \
   pkg-config --libs mxnet && \
   cd $GOPATH/src/$PKG && \
-  dep ensure && \
-  rm -fr vendor/github.com/Sirupsen && \
-  find vendor -type f -exec sed -i 's/Sirupsen/sirupsen/g' {} + && \
+  dep ensure -v && \
   go build -a -installsuffix cgo -ldflags "-s -w -X ${PKG}/Version=${VERSION} -X ${PKG}/GitCommit=${VCS_REF} -X ${PKG}/BuildDate=${BUILD_DATE}"&& \
   go install && \
   rm -fr vendor
