@@ -6,7 +6,7 @@ services:
 script:
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
   - cd ${TRAVIS_BUILD_DIR}/dockerfiles
-  - make build
-  - make push
+  - make docker_build
+  - make docker_push
 after_script:
   - curl -X POST https://hooks.microbadger.com/images/carml/go-mxnet/1MrtzLGOTLhD_lTAZ2Ksy0HP-nI=
