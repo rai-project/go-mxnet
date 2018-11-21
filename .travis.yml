@@ -3,6 +3,8 @@ dist: xenial
 sudo: required
 services:
   - docker
+install:
+  - echo "skip"
 script:
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
   - cd ${TRAVIS_BUILD_DIR}/dockerfiles
