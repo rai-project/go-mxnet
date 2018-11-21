@@ -33,7 +33,7 @@ RUN git clone --single-branch --depth 1 --branch $FRAMEWORK_VERSION --recursive 
 ENV MXNET_ROOT_DIR $FRAMEWORKS_DIR/mxnet
 
 RUN cd mxnet && \
-  mkdir -p /opt/frameworks/mxnet &&  \
+  mkdir -p /opt/mxnet &&  \
   cp make/config.mk . && \
   echo "USE_BLAS=openblas" >>config.mk && \
   echo "USE_OPENCV=0" >>config.mk && \
@@ -44,22 +44,22 @@ RUN cd mxnet && \
   echo "USE_CUDNN=1" >>config.mk && \
   echo "USE_PROFILER=1" >>config.mk && \
   echo "USE_PYTHON=1" >>config.mk && \
-  make ADD_LDFLAGS=-L/usr/local/cuda/lib64/stubs PREFIX=/opt/frameworks/mxnet &&  \
-  cp -r include /opt/frameworks/mxnet/ && \
-  cp -r lib /opt/frameworks/mxnet/ && \
+  make ADD_LDFLAGS=-L/usr/local/cuda/lib64/stubs PREFIX=/opt/mxnet &&  \
+  cp -r include /opt/mxnet/ && \
+  cp -r lib /opt/mxnet/ && \
   rm -r build
 
-RUN ln -s /opt/frameworks/mxnet/lib/libmxnet.so /usr/lib/libmxnet.so
+RUN ln -s /opt/mxnet/lib/libmxnet.so /usr/lib/libmxnet.so
 ENV LD_LIBRARY_PATH /usr/local/cuda/lib64:$LD_LIBRARY_PATH
-ENV LD_LIBRARY_PATH /opt/frameworks/mxnet/lib:$LD_LIBRARY_PATH
-ENV LIBRARY_PATH /opt/frameworks/mxnet/lib:$LIBRARY_PATH
+ENV LD_LIBRARY_PATH /opt/mxnet/lib:$LD_LIBRARY_PATH
+ENV LIBRARY_PATH /opt/mxnet/lib:$LIBRARY_PATH
 
 # Get Go bindings
 ENV PKG github.com/rai-project/go-mxnet
 WORKDIR $GOPATH/src/$PKG
 
 RUN git clone --depth=1 --branch=master https://${PKG}.git . && \
-  sed -i "/prefix=/c prefix=\/opt/frameworks/mxnet" $GOPATH/src/github.com/rai-project/go-mxnet/travis/mxnet.pc && \
+  sed -i "/prefix=/c prefix=\/opt/mxnet" $GOPATH/src/github.com/rai-project/go-mxnet/travis/mxnet.pc && \
   cp $GOPATH/src/github.com/rai-project/go-mxnet/travis/mxnet.pc /usr/lib/pkgconfig && \
   pkg-config --libs mxnet && \
   cd $GOPATH/src/$PKG && \

@@ -1,58 +1,18 @@
-sudo: required
-
 language: go
-
-go:
-  - 1.10.x
-
-addons:
-  apt:
-    sources:
-      - sourceline: ppa:ubuntu-toolchain-r/test
-      - sourceline: deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64
-          /
-        key_url: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/7fa2af80.pub
-      - sourceline:
-          deb https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1604/x86_64
-          /
-    packages:
-      - gcc-6
-      - g++-6
-      - libopenblas-dev
-      - libopencv-dev
-      - cmake
-      - libnccl2
-      - cuda-cudart-dev-9-2
-      - cuda-libraries-dev-9-2
-      - cuda-cublas-dev-9-2
-      - cuda-misc-headers-9-2
-      - cuda-nvml-dev-9-2
-      - cuda-cupti-9-2
-      - libcudnn7
-      - libcudnn7-dev
+dist: xenial
+sudo: required
+services:
+  - docker
 env:
   global:
-    - CXX=g++-6
-    - CC=gcc-6
-    - CUDACXX=/usr/local/cuda-9.2/bin/nvcc
-    - LD_LIBRARY_PATH=/usr/local/nvidia/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
-    - LD_LIBRARY_PATH=/usr/local/cuda-9.2/nvvm/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
-    - LD_LIBRARY_PATH=/usr/local/cuda-9.2/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
-    - LD_LIBRARY_PATH=/usr/local/cuda-9.2/lib64/stubs${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
-    - LD_LIBRARY_PATH=/usr/local/cuda-9.2/targets/x86_64-linux/lib/stubs/:+:${LD_LIBRARY_PATH}}
-    - LD_LIBRARY_PATH=/usr/local/cuda-9.2/extras/CUPTI/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
-    - PATH=/usr/local/cuda-9.2/bin${PATH:+:${PATH}}
-    - CGO_CFLAGS="${CGO_CFLAGS} -I /usr/local/cuda-9.2/include -I/usr/local/cuda-9.2/nvvm/include -I /usr/local/cuda-9.2/extras/CUPTI/include -I /home/travis/gopath/src/github.com/rai-project/go-mxnet/travis/mxnet/include"
-    - CGO_LDFLAGS="${CGO_LDFLAGS} -L /usr/local/cuda-9.2/lib64/stubs"
-    - CGO_LDFLAGS="${CGO_LDFLAGS} -L /usr/local/nvidia/lib64 -L /usr/local/cuda-9.2/nvvm/lib64 -L /usr/local/cuda-9.2/lib64 -L /usr/local/cuda-9.2/lib64/stubs -L /usr/local/cuda-9.2/targets/x86_64-linux/lib/stubs/ -L /usr/local/cuda-9.2/lib64/stubs -L /usr/local/cuda-9.2/extras/CUPTI/lib64 /home/travis/gopath/src/github.com/rai-project/go-mxnet/travis/mxnet/lib"
+    - TRAVIS_REPO_OWNER=${TRAVIS_REPO_SLUG#*/}
+    - TRAVIS_REPO_NAME=${TRAVIS_REPO_SLUG%/*}
 before_install:
-  - source travis/env.sh
-  - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-install:
-  - dep ensure -v
-  - go build
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 script:
-  - echo ${TRAVIS_BUILD_DIR}
   - cd ${TRAVIS_BUILD_DIR}/dockerfiles
-  - make docker_build
-  - echo "Docker build successful..."
+  - make build
+  - make push
+  - cd ${TRAVIS_BUILD_DIR}/${TRAVIS_REPO_NAME}-agent/dockerfiles
+  - make build
+  - make push
