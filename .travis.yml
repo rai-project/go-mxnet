@@ -3,13 +3,10 @@ dist: xenial
 sudo: required
 services:
   - docker
-env:
-  global:
-    - TRAVIS_REPO_OWNER=${TRAVIS_REPO_SLUG#*/}
-    - TRAVIS_REPO_NAME=${TRAVIS_REPO_SLUG%/*}
-before_install:
-  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 script:
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
   - cd ${TRAVIS_BUILD_DIR}/dockerfiles
   - make build
   - make push
+after_script:
+  - curl -X POST https://hooks.microbadger.com/images/carml/go-mxnet/1MrtzLGOTLhD_lTAZ2Ksy0HP-nI=
