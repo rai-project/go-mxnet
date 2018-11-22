@@ -41,7 +41,7 @@ RUN cd mxnet && \
   echo "USE_CUDA_PATH=/usr/local/cuda" >>config.mk && \
   echo "USE_CUDNN=1" >>config.mk && \
   echo "USE_PROFILER=1" >>config.mk && \
-  make ADD_LDFLAGS=-L/usr/local/cuda/lib64/stubs PREFIX=/opt/mxnet &&  \
+  make ADD_LDFLAGS=-L/usr/local/cuda/lib64/stubs PREFIX=/opt/mxnet -j$(nproc) &&  \
   cp -r include /opt/mxnet/ && \
   cp -r lib /opt/mxnet/ && \
   rm -r build
