@@ -1,14 +1,20 @@
-language: go
 dist: xenial
 sudo: required
 services:
   - docker
-install:
-  - echo "skip"
-script:
-  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-  - cd ${TRAVIS_BUILD_DIR}/dockerfiles
-  - make docker_build
-  - make docker_push
-after_script:
-  - curl -X POST https://hooks.microbadger.com/images/carml/go-mxnet/1MrtzLGOTLhD_lTAZ2Ksy0HP-nI=
+jobs:
+  include:
+    - stage: build/push docker
+      script:
+        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+        - cd ${TRAVIS_BUILD_DIR}/dockerfiles
+        - travis_wait 120 make docker_build_cpu
+        - travis_wait 120 make docker_push_cpu
+    - stage: build/push docker
+      script:
+        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+        - cd ${TRAVIS_BUILD_DIR}/dockerfiles
+        - travis_wait 120 make docker_build_gpu
+        - travis_wait 120 make docker_push_gpu
+    - stage: update microbadger
+      script: "curl -X POST https://hooks.microbadger.com/images/carml/go-caffe2/AeELmVfl5ucS37qg1Me7vJwauZY="
