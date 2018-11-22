@@ -61,7 +61,7 @@
   name = "github.com/apache/thrift"
   packages = ["lib/go/thrift"]
   pruneopts = "UT"
-  revision = "2391f33465b7b5ec1f3c9191f627a469916b892a"
+  revision = "7af79c83591ddf289abaeacc7f0e97af7397f825"
 
 [[projects]]
   branch = "master"
@@ -110,8 +110,8 @@
     "service/sts",
   ]
   pruneopts = "UT"
-  revision = "cf00ea20983ce38df17ab0a0814463ab8838459f"
-  version = "v1.15.73"
+  revision = "66af558c91f83a793b4a0101f70742062982f611"
+  version = "v1.15.81"
 
 [[projects]]
   branch = "master"
@@ -232,12 +232,12 @@
   version = "v1.4.7"
 
 [[projects]]
-  digest = "1:31a18dae27a29aa074515e43a443abfd2ba6deb6d69309d8d7ce789c45f34659"
+  digest = "0:"
   name = "github.com/go-logfmt/logfmt"
   packages = ["."]
   pruneopts = "UT"
-  revision = "390ab7935ee28ec6b286364bba9b4dd6410cb3d5"
-  version = "v0.3.0"
+  revision = "07c9b44f60d7ffdfb7d8efe1ad539965737836dc"
+  version = "v0.4.0"
 
 [[projects]]
   digest = "1:64a5a67c69b70c2420e607a8545d674a23778ed9c3e80607bfd17b77c6c87f6a"
@@ -278,7 +278,7 @@
     "ptypes/timestamp",
   ]
   pruneopts = "UT"
-  revision = "951a149f90371fb8858c6c979d03bb2583611052"
+  revision = "882cf97a83ad205fd22af574246a3bc647d7a7d2"
 
 [[projects]]
   branch = "master"
@@ -317,7 +317,7 @@
     "helper/url",
   ]
   pruneopts = "UT"
-  revision = "b6e1d7a3a7873d94fe3e42a0817345427ed17f1b"
+  revision = "bd1edc22f8ea9d71b87fbdc0c07f0afb77ae39b6"
 
 [[projects]]
   digest = "0:"
@@ -554,7 +554,7 @@
   name = "github.com/rai-project/config"
   packages = ["."]
   pruneopts = "UT"
-  revision = "628ac79ac6e3bc58c01dc06e9c2fd0220094ed32"
+  revision = "4d0de45fe6c1a55b23670fb8d402451709cf21ba"
 
 [[projects]]
   branch = "master"
@@ -566,7 +566,7 @@
     "framework/options",
   ]
   pruneopts = "UT"
-  revision = "e674e0197f742b6f7764a28359483bc2e3e23b46"
+  revision = "c3e36d46e02760804a69fb48e96989d813d477fa"
 
 [[projects]]
   branch = "master"
@@ -574,7 +574,7 @@
   name = "github.com/rai-project/downloadmanager"
   packages = ["."]
   pruneopts = "UT"
-  revision = "419eb566d9547f217f43da6dabab4a888ab263b3"
+  revision = "abede5faa82fac78258b905c466590fd71113935"
 
 [[projects]]
   branch = "master"
@@ -585,15 +585,7 @@
     "types",
   ]
   pruneopts = "UT"
-  revision = "28071b0af94546f640e4b19deb1b32a94f57336c"
-
-[[projects]]
-  digest = "0:"
-  name = "github.com/rai-project/go-mxnet"
-  packages = ["mxnet"]
-  pruneopts = "UT"
-  revision = "d84ee30956b96d76aa170f2c738a267b23cfedb5"
-  version = "v0.3.16"
+  revision = "ffa685874f19a86b0e6cbf9c8e1085d26987e999"
 
 [[projects]]
   branch = "master"
@@ -609,7 +601,7 @@
   name = "github.com/rai-project/logger"
   packages = ["."]
   pruneopts = "UT"
-  revision = "1489285c3ccf666d2983e3746486db940813c60d"
+  revision = "3edfaed4af1c2be49ae65399a82fab15780e6549"
 
 [[projects]]
   branch = "master"
@@ -617,7 +609,7 @@
   name = "github.com/rai-project/machine"
   packages = ["os"]
   pruneopts = "UT"
-  revision = "49b3430c3dec8bfdd1424390669eed088b3eb3d0"
+  revision = "e20c9a49017c471cbd3cbcb38d88347c794bc83d"
 
 [[projects]]
   branch = "master"
@@ -625,7 +617,7 @@
   name = "github.com/rai-project/nvidia-smi"
   packages = ["."]
   pruneopts = "UT"
-  revision = "3f69165f7c774af0126349bb4d148ba84a1e5152"
+  revision = "5f6bbd4268777e33ec51313e4b6c0b89de084cbf"
 
 [[projects]]
   branch = "master"
@@ -633,7 +625,7 @@
   name = "github.com/rai-project/nvml-go"
   packages = ["."]
   pruneopts = "UT"
-  revision = "fafad6695983303fbc70d31b48814d121994df62"
+  revision = "4e1189bcc320475bfec1306c719b78939c31a00d"
 
 [[projects]]
   branch = "master"
@@ -641,7 +633,7 @@
   name = "github.com/rai-project/tegra"
   packages = ["."]
   pruneopts = "UT"
-  revision = "c0fcae3ed932917905c46494a2cc9b2c4a47d1e8"
+  revision = "1d9901ca382bfae82f47b1ddb5fb67a019d254e8"
 
 [[projects]]
   branch = "master"
@@ -659,7 +651,7 @@
     "zipkin",
   ]
   pruneopts = "UT"
-  revision = "bcbdea0babb41646683358b2ebe78696ba6644a9"
+  revision = "6f38f1967f94005b820ed9bd51e2c6ee9a9fba57"
 
 [[projects]]
   branch = "master"
@@ -667,7 +659,7 @@
   name = "github.com/rai-project/utils"
   packages = ["."]
   pruneopts = "UT"
-  revision = "6708a9c28d4e0c3c6bd19213f4920a16f43865d4"
+  revision = "be23e9dad62b9c5de665f502450144abd61d31a6"
 
 [[projects]]
   branch = "master"
@@ -675,7 +667,7 @@
   name = "github.com/rai-project/uuid"
   packages = ["."]
   pruneopts = "UT"
-  revision = "9408958525cb3486f7ef41bf5691d4d9e081b08e"
+  revision = "2a4c8b922cc6a17bd16f236d4bb06134972289f2"
 
 [[projects]]
   branch = "master"
@@ -683,7 +675,7 @@
   name = "github.com/rai-project/vipertags"
   packages = ["."]
   pruneopts = "UT"
-  revision = "8dc2a1a8a7a32a0a2d482d545cc579e5fe839356"
+  revision = "8cbaab517f5d43e2d0bb7f1b237a0dfdc551cc81"
 
 [[projects]]
   branch = "master"
@@ -764,7 +756,7 @@
     "remote",
   ]
   pruneopts = "UT"
-  revision = "ae103d7e593e371c69e832d5eb3347e2b80cbbc9"
+  revision = "06c7c0d9b3c7cfca13deff6e353a052e08828ad4"
 
 [[projects]]
   digest = "0:"
@@ -846,7 +838,7 @@
     "ssh/terminal",
   ]
   pruneopts = "UT"
-  revision = "e4dc69e5b2fd71dcaf8bd5d054eb936deb78d1fa"
+  revision = "3d3f9f413869b949e48070b5bc593aa22cc2b8f2"
 
 [[projects]]
   branch = "master"
@@ -862,7 +854,7 @@
     "trace",
   ]
   pruneopts = "UT"
-  revision = "03003ca0c849e57b6ea29a4bab8d3cb6e4d568fe"
+  revision = "adae6a3d119ae4890b46832a2e88a95adc62b8e7"
 
 [[projects]]
   branch = "master"
@@ -881,7 +873,7 @@
     "windows",
   ]
   pruneopts = "UT"
-  revision = "66b7b1311ac80bbafcd2daeef9a5e6e2cd1e2399"
+  revision = "62eef0e2fa9b2c385f7b2778e763486da6880d37"
 
 [[projects]]
   digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
@@ -934,7 +926,7 @@
     "mat",
   ]
   pruneopts = "UT"
-  revision = "48288cca5b5efb2c3c3b0d8b48a6b01b37831bf8"
+  revision = "17a33f2c20a6b29fa8e2ca1188b5d7e4db1dfa13"
 
 [[projects]]
   branch = "master"
@@ -1017,7 +1009,6 @@
     "github.com/rai-project/dlframework/framework/options",
     "github.com/rai-project/downloadmanager",
     "github.com/rai-project/go-cupti",
-    "github.com/rai-project/go-mxnet/mxnet",
     "github.com/rai-project/logger",
     "github.com/rai-project/nvidia-smi",
     "github.com/rai-project/tracer",

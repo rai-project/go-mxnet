@@ -24,11 +24,6 @@
 #   go-tests = true
 #   unused-packages = true
 
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/GeertJohan/go-sourcepath"
-
 [[constraint]]
   name = "github.com/Unknwon/com"
   version = "1.0.0"
