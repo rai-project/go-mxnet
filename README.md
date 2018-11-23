@@ -1,5 +1,6 @@
 ## go-mxnet
 
+[![Build Status](https://dev.azure.com/dakkak/rai/_apis/build/status/rai-project.go-mxnet)](https://dev.azure.com/dakkak/rai/_build/latest?definitionId=8)
 [![Build Status](https://travis-ci.org/rai-project/go-mxnet.svg?branch=master)](https://travis-ci.org/rai-project/go-mxnet)
 [![Go Report Card](https://goreportcard.com/badge/github.com/rai-project/go-mxnet)](https://goreportcard.com/report/github.com/rai-project/go-mxnet)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
