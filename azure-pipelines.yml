@@ -1,28 +1,27 @@
-
 jobs:
-- job: CPU
-  pool:
-    vmImage: 'Ubuntu 16.04'
-  steps:
-  - bash: |
-     docker login -u $(DOCKER_PASSWORD) -p $(DOCKER_PASSWORD)
-     cd dockerfiles
-     make docker_build_cpu
-     make docker_push_cpu
-     displayName: 'Build, tag and push cpu image'
-- job: GPU
-  pool:
-    vmImage: 'Ubuntu 16.04'
-  steps:
-  - bash: |
-     docker login -u $(DOCKER_PASSWORD) -p $(DOCKER_PASSWORD)
-     cd dockerfiles
-     make docker_build_gpu
-     make docker_push_gpu
-     displayName: 'Build, tag and push gpu image'
-- job: Update_Microbadger
-  dependsOn:
-  - CPU
-  - GPU
-  steps:
-  - script: 'curl -X POST https://hooks.microbadger.com/images/carml/go-mxnet/1MrtzLGOTLhD_lTAZ2Ksy0HP-nI='
+  - job: CPU
+    pool:
+      vmImage: 'Ubuntu 16.04'
+    steps:
+      - bash: |
+          docker login -u $(DOCKER_USERNAME) -p $(DOCKER_PASSWORD)
+          cd dockerfiles
+          make docker_build_cpu
+          make docker_push_cpu
+          displayName: 'Build, tag and push cpu image'
+  - job: GPU
+    pool:
+      vmImage: 'Ubuntu 16.04'
+    steps:
+      - bash: |
+          docker login -u $(DOCKER_USERNAME) -p $(DOCKER_PASSWORD)
+          cd dockerfiles
+          make docker_build_gpu
+          make docker_push_gpu
+          displayName: 'Build, tag and push gpu image'
+  - job: Update_Microbadger
+    dependsOn:
+      - CPU
+      - GPU
+    steps:
+      - script: 'curl -X POST https://hooks.microbadger.com/images/carml/go-mxnet/1MrtzLGOTLhD_lTAZ2Ksy0HP-nI='
