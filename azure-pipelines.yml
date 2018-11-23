@@ -20,7 +20,7 @@ jobs:
      make docker_build_gpu
      make docker_push_gpu
      displayName: 'Build, tag and push gpu image'
-- job: Update Microbadger
+- job: Update_Microbadger
   dependsOn:
   - CPU
   - GPU
