@@ -6,6 +6,7 @@ jobs:
       - bash: |
           docker login -u $(DOCKER_USERNAME) -p $(DOCKER_PASSWORD)
           cd dockerfiles
+          make docker_pull_cpu
           make docker_build_cpu
           make docker_push_cpu
   - job: GPU
@@ -13,6 +14,7 @@ jobs:
       - bash: |
           docker login -u $(DOCKER_USERNAME) -p $(DOCKER_PASSWORD)
           cd dockerfiles
+          make docker_pull_gpu
           make docker_build_gpu
           make docker_push_gpu
   - job: Update_Microbadger
