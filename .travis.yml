@@ -8,12 +8,14 @@ jobs:
       script:
         - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
         - cd ${TRAVIS_BUILD_DIR}/dockerfiles
+        - travis_wait 50 make docker_pull_cpu
         - travis_wait 50 make docker_build_cpu
         - travis_wait 50 make docker_push_cpu
     - stage: build/push docker
       script:
         - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
         - cd ${TRAVIS_BUILD_DIR}/dockerfiles
+        - travis_wait 50 make docker_pull_gpu
         - travis_wait 50 make docker_build_gpu
         - travis_wait 50 make docker_push_gpu
     - stage: update microbadger
