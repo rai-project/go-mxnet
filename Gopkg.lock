@@ -61,11 +61,7 @@
   name = "github.com/apache/thrift"
   packages = ["lib/go/thrift"]
   pruneopts = "UT"
-<<<<<<< HEAD
-  revision = "7af79c83591ddf289abaeacc7f0e97af7397f825"
-=======
-  revision = "aa177ea4b30b2fe2711ced7b79cfd5947711146f"
->>>>>>> 69825ca057cc2ac12a00814696d0996c4e89a77d
+  revision = "7abb7d5fbc700db2338719bc88b7f4b10304942b"
 
 [[projects]]
   branch = "master"
@@ -114,13 +110,8 @@
     "service/sts",
   ]
   pruneopts = "UT"
-<<<<<<< HEAD
   revision = "66af558c91f83a793b4a0101f70742062982f611"
   version = "v1.15.81"
-=======
-  revision = "57d992f58b7e092da10921050426717f7944bd42"
-  version = "v1.15.80"
->>>>>>> 69825ca057cc2ac12a00814696d0996c4e89a77d
 
 [[projects]]
   branch = "master"
@@ -575,7 +566,7 @@
     "framework/options",
   ]
   pruneopts = "UT"
-  revision = "c3e36d46e02760804a69fb48e96989d813d477fa"
+  revision = "5679820fb2e770d17c26cc07ba9c4b3ed59e83dd"
 
 [[projects]]
   branch = "master"
@@ -882,11 +873,7 @@
     "windows",
   ]
   pruneopts = "UT"
-<<<<<<< HEAD
   revision = "62eef0e2fa9b2c385f7b2778e763486da6880d37"
-=======
-  revision = "0cf1ed9e522b7dbb416f080a5c8003de9b702bf4"
->>>>>>> 69825ca057cc2ac12a00814696d0996c4e89a77d
 
 [[projects]]
   digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
@@ -939,11 +926,7 @@
     "mat",
   ]
   pruneopts = "UT"
-<<<<<<< HEAD
   revision = "17a33f2c20a6b29fa8e2ca1188b5d7e4db1dfa13"
-=======
-  revision = "3f7ecaa7e8caa59e006c04e52e31f09f954f744d"
->>>>>>> 69825ca057cc2ac12a00814696d0996c4e89a77d
 
 [[projects]]
   branch = "master"
