@@ -41,7 +41,7 @@ RUN cd mxnet && \
   echo "USE_CUDA=0" >>config.mk && \
   echo "ADD_CFLAGS=-I/usr/include/openblas -Wno-strict-aliasing -Wno-sign-compare -ftrack-macro-expansion=0 -Wno-misleading-indentation" >>config.mk && \
   echo "ADD_LDFLAGS=-L/usr/local/cuda/lib64" >>config.mk && \
-  make PREFIX=/opt/mxnet &&  \
+  make PREFIX=/opt/mxnet -j"$(nproc)" &&  \
   cp -r include /opt/mxnet/ && \
   cp -r lib /opt/mxnet/ && \
   rm -r build
