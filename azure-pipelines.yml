@@ -8,7 +8,7 @@ jobs:
           make docker_pull_cpu
           make docker_build_cpu
           ./push_cpu.sh
-          - job: GPU
+  - job: GPU
     timeoutInMinutes: 0
     steps:
       - bash: |
