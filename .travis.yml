@@ -17,6 +17,6 @@ jobs:
         - cd ${TRAVIS_BUILD_DIR}/dockerfiles
         - make docker_pull_cpu
         - travis_wait 50 make docker_build_gpu
-        - travis_retry 50 make docker_push_gpu
+        - travis_retry make docker_push_gpu
     - stage: update microbadger
       script: 'curl -X POST https://github.com/rai-project/go-'
