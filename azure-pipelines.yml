@@ -7,8 +7,8 @@ jobs:
           cd dockerfiles
           make docker_pull_cpu
           make docker_build_cpu
-          while $(make docker_push_cpu); do :; done
-  - job: GPU
+          ./push_cpu.sh
+          - job: GPU
     timeoutInMinutes: 0
     steps:
       - bash: |
@@ -16,7 +16,7 @@ jobs:
           cd dockerfiles
           make docker_pull_gpu
           make docker_build_gpu
-          while $(make docker_push_gpu); do :; done
+          ./push_gpu.sh
   - job: Update_Microbadger
     dependsOn:
       - CPU
