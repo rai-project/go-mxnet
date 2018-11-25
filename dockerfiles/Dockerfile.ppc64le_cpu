@@ -34,7 +34,7 @@ RUN cd mxnet && \
   mkdir -p /opt/mxnet &&  \
   cp make/config.mk . && \
   echo "USE_BLAS=openblas" >>config.mk && \
-  echo "USE_CPP_PACKAGE=1" >>config.mk && \
+  echo "USE_CPP_PACKAGE=0" >>config.mk && \
   echo "USE_OPENCV=0" >>config.mk && \
   echo "USE_PROFILER=1" >>config.mk && \
   echo "USE_PYTHON=1" >>config.mk && \
