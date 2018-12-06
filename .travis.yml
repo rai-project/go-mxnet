@@ -1,22 +1,12 @@
+language: go
 dist: xenial
 sudo: required
-services:
-  - docker
-jobs:
-  include:
-    - stage: build/push docker
-      script:
-        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-        - cd ${TRAVIS_BUILD_DIR}/dockerfiles
-        - make docker_pull_cpu
-        - travis_wait 50 make docker_build_cpu
-        - travis_retry make docker_push_cpu
-    - stage: build/push docker
-      script:
-        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-        - cd ${TRAVIS_BUILD_DIR}/dockerfiles
-        - make docker_pull_cpu
-        - travis_wait 50 make docker_build_gpu
-        - travis_retry make docker_push_gpu
-    - stage: update microbadger
-      script: 'curl -X POST https://github.com/rai-project/go-'
+before_install:
+  - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+install:
+  - dep ensure -vendor-only -v
+  - go build
+script:
+  - echo "Skip tests..."
+after_script:
+  - go test -race -v
