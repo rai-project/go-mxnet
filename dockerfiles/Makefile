@@ -55,7 +55,7 @@ BUILD_ARGS = --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
 			 --build-arg VCS_URL=`git config --get remote.origin.url` \
 		   --build-arg VCS_REF=$(GIT_COMMIT) \
 		   --build-arg ARCH=$(ARCH) \
-			 --build-arg FRAMEWORK_VERSION="1.3.1.rc0"
+			 --build-arg FRAMEWORK_VERSION="1.3.1"
 
 docker_pull_cpu:
 	docker pull carml/base:$(ARCH)-cpu-latest
