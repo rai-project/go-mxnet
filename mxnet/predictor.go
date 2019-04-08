@@ -1,28 +1,16 @@
-// Copyright 2016 go-mxnet-predictor Authors. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package mxnet
 
 /*
-// go preamble
 #include <mxnet/c_predict_api.h>
 #include <stdlib.h>
 */
 import "C"
 import (
 	"context"
+	"runtime"
 	"unsafe"
+
+	"gorgonia.org/tensor"
 
 	"github.com/pkg/errors"
 	"github.com/rai-project/dlframework/framework/options"
@@ -61,8 +49,7 @@ func New(ctx context.Context, opts ...options.Option) (*Predictor, error) {
 	)
 
 	options := options.New(opts...)
-
-	if len(options.Symbol()) == 0 {
+	if len(options.Graph()) == 0 {
 		return nil, errors.New("invalid empty symbol")
 	}
 	if len(options.Weights()) == 0 {
@@ -75,14 +62,18 @@ func New(ctx context.Context, opts ...options.Option) (*Predictor, error) {
 		return nil, errors.New("no devices defined")
 	}
 
-	if options.UsesGPU() && !nvidiasmi.HasGPU {
-		return nil, errors.New("no GPU device")
+	if options.DisableFrameworkAutoTuning() {
+		disableFrameworkAutoTuning()
 	}
 
-	symbol := options.Symbol()
+	symbol := options.Graph()
 	params := options.Weights()
 	device := options.Devices()[0]
 	nodes := options.InputNodes()
+
+	if options.UsesGPU() && !nvidiasmi.HasGPU {
+		return nil, errors.New("no GPU device")
+	}
 
 	// malloc a **char which like []string to store node keys
 	keys := C.malloc(C.size_t(len(nodes)) * C.size_t(unsafe.Sizeof(pc))) // c gc
@@ -91,10 +82,8 @@ func New(ctx context.Context, opts ...options.Option) (*Predictor, error) {
 		// get memory address
 		p := (**C.char)(unsafe.Pointer(uintptr(keys) + uintptr(ii)*unsafe.Sizeof(pc)))
 		// c gc
-		*p = C.CString(nd.Key())
-
-		shape := intSliceToUint32(nd.Shape())
-
+		*p = C.CString(nd.Key)
+		shape := intSliceToUint32(nd.Shape)
 		// shapeIdx for next node
 		jj += len(shape)
 		shapeIdx = append(shapeIdx, uint32(jj))
@@ -104,7 +93,8 @@ func New(ctx context.Context, opts ...options.Option) (*Predictor, error) {
 
 	var handle C.PredictorHandle
 
-	err := C.MXPredCreate((*C.char)(unsafe.Pointer(&symbol[0])),
+	err := C.MXPredCreate(
+		(*C.char)(unsafe.Pointer(&symbol[0])),
 		unsafe.Pointer(&params[0]),
 		C.int(len(params)),
 		C.int(device.Type()),
@@ -126,22 +116,28 @@ func New(ctx context.Context, opts ...options.Option) (*Predictor, error) {
 	if err != 0 {
 		return nil, GetLastError()
 	}
-	return &Predictor{handle: handle, options: options}, nil
+
+	pred := &Predictor{handle: handle, options: options}
+
+	runtime.SetFinalizer(pred, (*Predictor).finalizer)
+
+	return pred, nil
 }
 
 // set the input data of predictor
 // go binding for MXPredSetInput
 // param key The name of input node to set
 // param data The float data to be set
-func (p *Predictor) SetInput(key string, data []float32) error {
+func (p *Predictor) SetInput(key string, input tensor.Tensor) error {
 	k := C.CString(key)
 	// free mem before return
 	defer C.free(unsafe.Pointer(k))
 
-	success := C.MXPredSetInput(p.handle,
+	success := C.MXPredSetInput(
+		p.handle,
 		k,
-		(*C.mx_float)(unsafe.Pointer(&data[0])),
-		C.mx_uint(len(data)),
+		(*C.mx_float)(input.Pointer()),
+		C.mx_uint(input.Size()),
 	)
 
 	if success != 0 {
@@ -160,44 +156,29 @@ func (p *Predictor) Forward() error {
 	return nil
 }
 
-func (p *Predictor) Predict(ctx context.Context, data []float32) error {
-	if data == nil || len(data) < 1 {
+func (p *Predictor) Predict(ctx context.Context, data []tensor.Tensor) error {
+	if len(data) == 0 {
 		return errors.New("intput data nil or empty")
 	}
 
-	inputNode := p.options.InputNodes()[0] // take the first input node
-	if inputNode.Key() == "" {
-		return errors.New("expecting a valid (non-empty) input layer name")
-	}
+	for ii, inputNode := range p.options.InputNodes() {
+		if inputNode.Key == "" {
+			return errors.New("expecting a valid (non-empty) input layer name")
+		}
 
-	var shape []int
-	if len(inputNode.Shape()) == 3 {
-		shape = inputNode.Shape()
-	} else {
-		shape = inputNode.Shape()[1:]
-	}
-
-	shapeLen := prod(shape)
-	dataLen := len(data)
-	inputCount := dataLen / shapeLen
-	batchSize := p.options.BatchSize()
-
-	if batchSize > inputCount {
-		padding := make([]float32, (batchSize-inputCount)*shapeLen)
-		data = append(data, padding...)
-	}
-
-	err := p.SetInput(inputNode.Key(), data)
-	if err != nil {
-		return err
+		err := p.SetInput(inputNode.Key, data[ii])
+		if err != nil {
+			return err
+		}
 	}
 
 	span, _ := tracer.StartSpanFromContext(ctx, tracer.MODEL_TRACE, "c_predict")
-	err = p.Forward()
+	defer span.Finish()
+
+	err := p.Forward()
 	if err != nil {
 		return err
 	}
-	span.Finish()
 
 	return nil
 }
@@ -210,7 +191,8 @@ func (p *Predictor) GetOutputShape(index int) ([]int, error) {
 		shapeData *C.mx_uint = nil
 		shapeDim  C.mx_uint  = 0
 	)
-	success := C.MXPredGetOutputShape(p.handle,
+	success := C.MXPredGetOutputShape(
+		p.handle,
 		C.mx_uint(index),
 		&shapeData,
 		&shapeDim,
@@ -227,13 +209,12 @@ func (p *Predictor) GetOutputShape(index int) ([]int, error) {
 	return res, nil
 }
 
-// get the output of the prediction
-// index is the index of the output node, set to 0 assuming there is only one output
-func (p *Predictor) ReadPredictionOutput(ctx context.Context) ([]float32, error) {
-	span, _ := tracer.StartSpanFromContext(ctx, tracer.MODEL_TRACE, "c_read_prediction_output")
-	defer span.Finish()
+func (p *Predictor) ReadPredictionOutputAtIndex(ctx context.Context, index int) (tensor.Tensor, error) {
+	node := p.options.OutputNodes()[index]
 
-	index := 0
+	if node.Dtype != tensor.Float32 {
+		panic("only supports float32 for now")
+	}
 
 	shape, err := p.GetOutputShape(index)
 	if err != nil {
@@ -241,25 +222,58 @@ func (p *Predictor) ReadPredictionOutput(ctx context.Context) ([]float32, error)
 	}
 
 	size := prod(shape)
-	probabilities := make([]float32, size)
-	success := C.MXPredGetOutput(p.handle,
+	output := make([]float32, size)
+	success := C.MXPredGetOutput(
+		p.handle,
 		C.mx_uint(index),
-		(*C.mx_float)(unsafe.Pointer(&probabilities[0])),
+		(*C.mx_float)(unsafe.Pointer(&output[0])),
 		C.mx_uint(size),
 	)
 	if success != 0 {
 		return nil, GetLastError()
 	}
 
-	return probabilities, nil
+	return tensor.NewDense(node.Dtype, shape, tensor.WithBacking(output)), nil
 }
 
-// free this predictor's C handle
-// go binding for MXPredFree
-func (p *Predictor) Close() error {
+// get the output of the prediction
+// index is the index of the output node, set to 0 assuming there is only one output
+func (p *Predictor) ReadPredictionOutputs(ctx context.Context) ([]tensor.Tensor, error) {
+	span, _ := tracer.StartSpanFromContext(ctx, tracer.MODEL_TRACE, "c_read_prediction_output")
+	defer span.Finish()
+
+	outputNodes := p.options.OutputNodes()
+	res := make([]tensor.Tensor, len(outputNodes))
+
+	for ii := 0; ii < len(outputNodes); ii++ {
+		tensor, err := p.ReadPredictionOutputAtIndex(ctx, ii)
+		if err != nil {
+			return nil, err
+		}
+		res[ii] = tensor
+	}
+
+	return res, nil
+}
+
+func (p *Predictor) finalizer() error {
+	if p.handle == nil {
+		return nil
+	}
 	success := C.MXPredFree(p.handle)
 	if success != 0 {
 		return GetLastError()
 	}
 	return nil
+}
+
+// free this predictor's C handle
+// go binding for MXPredFree
+func (p *Predictor) Close() error {
+	if p == nil {
+		return nil
+	}
+	err := p.finalizer()
+	p.handle = nil
+	return err
 }
