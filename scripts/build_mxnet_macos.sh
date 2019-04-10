@@ -1,6 +1,6 @@
 #!/bin/sh
 
-FRAMEWORK_VERSION=1.3.0
+FRAMEWORK_VERSION=1.3.1
 MXNET_SRC_DIR=$HOME/code/mxnet
 MXNET_DIST_DIR=/opt/mxnet
 

@@ -30,9 +30,9 @@ import (
 
 var (
 	batchSize   = 1
-	model       = "squeezenet_v1.0"
-	graph_url   = "http://s3.amazonaws.com/store.carml.org/models/mxnet/squeezenet_v1.0/squeezenet_v1.0-symbol.json" //"http://s3.amazonaws.com/store.carml.org/models/mxnet/bvlc_alexnet/bvlc_alexnet-symbol.json"
-	weights_url = "http://s3.amazonaws.com/store.carml.org/models/mxnet/squeezenet_v1.0/squeezenet_v1.0-0000.params" // "http://s3.amazonaws.com/store.carml.org/models/mxnet/bvlc_alexnet/bvlc_alexnet-0000.params"
+	model       = "alexnet"
+	graph_url   = "http://s3.amazonaws.com/store.carml.org/models/mxnet/gluoncv/alexnet/model-symbol.json"
+	weights_url = "http://s3.amazonaws.com/store.carml.org/models/mxnet/gluoncv/alexnet/model-0000.params"
 	synset_url  = "http://s3.amazonaws.com/store.carml.org/synsets/imagenet/synset.txt"
 )
 
@@ -64,8 +64,8 @@ func main() {
 
 	dir, _ := filepath.Abs("../tmp")
 	dir = filepath.Join(dir, model)
-	graph := filepath.Join(dir, "squeezenet_v1.0-symbol.json")
-	weights := filepath.Join(dir, "squeezenet_v1.0-0000.params")
+	graph := filepath.Join(dir, "model-symbol.json")
+	weights := filepath.Join(dir, "model-0000.params")
 	synset := filepath.Join(dir, "synset.txt")
 
 	if !com.IsFile(graph) {
@@ -105,7 +105,7 @@ func main() {
 	var input []float32
 	for ii := 0; ii < batchSize; ii++ {
 		resized := transform.Resize(img, 224, 224, transform.Linear)
-		res, err := cvtImageTo1DArray(resized, []float32{0, 0, 0}) // []float32{123, 117, 104})
+		res, err := cvtImageToNCHW1DArray(resized, []float32{0, 0, 0}) // []float32{123, 117, 104})
 		if err != nil {
 			panic(err)
 		}
