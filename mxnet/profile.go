@@ -28,7 +28,10 @@ typedef struct MXCallbackList MXCallbackList;
 */
 import "C"
 
-var initTime = time.Now()
+var (
+	initTime   = time.Now()
+	adjustTime = false
+)
 
 type Profile struct {
 	Trace          *chrome.Trace
@@ -313,16 +316,22 @@ func (p *Profile) process() {
 		if eventType != "B" {
 			continue
 		}
-		if minTime != 0 && minTime < event.Timestamp {
-			continue
+		if adjustTime {
+			if minTime != 0 && minTime < event.Timestamp {
+				continue
+			}
+			minTime = event.Timestamp
 		}
-		minTime = event.Timestamp
 	}
 
 	layerSequenceIndex := 0
 	for ii, event := range events {
 		events[ii].Name = strings.Trim(strings.Trim(event.Name, "["), "]")
+		if adjustTime {
 		events[ii].Time = start.Add(time.Duration(event.Timestamp-minTime) * timeUnit)
+		} else {
+		events[ii].Time = time.Unix(0, event.Timestamp * int64(timeUnit))
+		}
 		if events[ii].Args == nil {
 			events[ii].Args = make(map[string]interface{})
 		}
