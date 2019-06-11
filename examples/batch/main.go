@@ -11,8 +11,6 @@ import (
 	"sort"
 
 	"github.com/Unknwon/com"
-	"github.com/anthonynsimon/bild/imgio"
-	"github.com/anthonynsimon/bild/transform"
 	"github.com/k0kubun/pp"
 	"github.com/pkg/errors"
 	"github.com/rai-project/config"
@@ -22,10 +20,13 @@ import (
 	"github.com/rai-project/downloadmanager"
 	cupti "github.com/rai-project/go-cupti"
 	"github.com/rai-project/go-mxnet/mxnet"
+	raiimage "github.com/rai-project/image"
+	"github.com/rai-project/image/types"
 	nvidiasmi "github.com/rai-project/nvidia-smi"
 	"github.com/rai-project/tracer"
 	_ "github.com/rai-project/tracer/all"
 	"gorgonia.org/tensor"
+	gotensor "gorgonia.org/tensor"
 )
 
 var (
@@ -37,26 +38,33 @@ var (
 )
 
 // convert go Image to 1-dim array
-func cvtImageToNCHW1DArray(src image.Image, mean []float32) ([]float32, error) {
+func cvtRGBImageToNCHW1DArray(src image.Image, mean []float32) ([]float32, error) {
 	if src == nil {
 		return nil, fmt.Errorf("src image nil")
 	}
 
-	b := src.Bounds()
-	h := b.Max.Y - b.Min.Y // image height
-	w := b.Max.X - b.Min.X // image width
+	in := src.(*types.RGBImage)
+	height := in.Bounds().Dy()
+	width := in.Bounds().Dx()
+	scale := []float32{0.229, 0.224, 0.225}
 
-	res := make([]float32, 3*h*w)
-	for y := 0; y < h; y++ {
-		for x := 0; x < w; x++ {
-			r, g, b, _ := src.At(x+b.Min.X, y+b.Min.Y).RGBA()
-			res[y*w+x] = float32(r>>8) - mean[0]
-			res[w*h+y*w+x] = float32(g>>8) - mean[1]
-			res[2*w*h+y*w+x] = float32(b>>8) - mean[2]
+	out := make([]float32, 3*height*width)
+
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			offset := y*in.Stride + x*3
+			rgb := in.Pix[offset : offset+3]
+			r, g, b := rgb[0], rgb[1], rgb[2]
+			out[y*width+x] = (float32(r)/255 - mean[0]) / scale[0]
+			out[width*height+y*width+x] = (float32(g)/255 - mean[1]) / scale[1]
+			out[2*width*height+y*width+x] = (float32(b)/255 - mean[2]) / scale[2]
+
+			// out[offset+0] = (float32(r)/255 - mean[0]) / scale[0]
+			// out[offset+1] = (float32(g)/255 - mean[1]) / scale[1]
+			// out[offset+2] = (float32(b)/255 - mean[2]) / scale[2]
 		}
 	}
-
-	return res, nil
+	return out, nil
 }
 
 func main() {
@@ -94,30 +102,54 @@ func main() {
 		panic(err)
 	}
 
-	imgDir, _ := filepath.Abs("../_fixtures")
-	imagePath := filepath.Join(imgDir, "cheeseburger.jpg")
+	height := 224
+	width := 224
+	channels := 3
 
-	img, err := imgio.Open(imagePath)
+	imgDir, _ := filepath.Abs("../_fixtures")
+	imgPath := filepath.Join(imgDir, "cheeseburger.jpg")
+	r, err := os.Open(imgPath)
 	if err != nil {
 		panic(err)
 	}
 
-	var input []float32
-	for ii := 0; ii < batchSize; ii++ {
-		resized := transform.Resize(img, 224, 224, transform.Linear)
-		res, err := cvtImageToNCHW1DArray(resized, []float32{0, 0, 0}) // []float32{123, 117, 104})
-		if err != nil {
-			panic(err)
-		}
-		input = append(input, res...)
+	var imgOpts []raiimage.Option
+	imgOpts = append(imgOpts, raiimage.Mode(types.RGBMode))
+	img, err := raiimage.Read(r, imgOpts...)
+	if err != nil {
+		panic(err)
 	}
 
-	opts := options.New()
+	imgOpts = append(imgOpts, raiimage.Resized(height, width))
+	imgOpts = append(imgOpts, raiimage.ResizeAlgorithm(types.ResizeAlgorithmLinear))
+	resized, err := raiimage.Resize(img, imgOpts...)
+	if err != nil {
+		panic(err)
+	}
+
+	input := make([]gotensor.Tensor, batchSize)
+	imgFloats, err := cvtRGBImageToNCHW1DArray(resized, []float32{0.485, 0.456, 0.406} /* []float32{123, 117, 104} */)
+	if err != nil {
+		panic(err)
+	}
+
+	pp.Println(resized.(*types.RGBImage).Pix[:4])
+
+	pp.Println(imgFloats[:4])
+
+	for ii := 0; ii < batchSize; ii++ {
+		input[ii] = gotensor.New(
+			gotensor.Of(tensor.Float32),
+			gotensor.WithShape(height, width, channels),
+			gotensor.WithBacking(imgFloats),
+		)
+	}
+
+	pp.Println(input[0].At(0, 0, 0))
 
 	device := options.CPU_DEVICE
 	if nvidiasmi.HasGPU {
 		device = options.CUDA_DEVICE
-
 	}
 
 	ctx := context.Background()
@@ -129,29 +161,30 @@ func main() {
 		Key:   "data",
 		Shape: []int{1, 3, 224, 224},
 	}
+
 	predictor, err := mxnet.New(
 		ctx,
-		options.WithOptions(opts),
+		options.WithOptions(options.New()),
 		options.Device(device, 0),
 		options.Graph(symbol),
 		options.Weights(params),
 		options.BatchSize(batchSize),
 		options.InputNodes([]options.Node{in}),
 		options.OutputNodes([]options.Node{
-			options.Node{Dtype: tensor.Float32},
+			options.Node{
+				Dtype: tensor.Float32,
+			},
 		}),
 	)
 	if err != nil {
-		panic(fmt.Sprintf("+v", err))
+		panic(fmt.Sprintf("%v", err))
 	}
 	defer predictor.Close()
 
-	inputs := []tensor.Tensor{
-		tensor.NewDense(tensor.Float32, in.Shape, tensor.WithBacking(input)),
-	}
-
-	err = predictor.Predict(ctx, inputs)
+	err = predictor.Predict(ctx, input)
 	if err != nil {
+		pp.Println("fine")
+
 		panic(err)
 	}
 
@@ -181,7 +214,7 @@ func main() {
 	}
 	profile.Start()
 
-	err = predictor.Predict(ctx, inputs)
+	err = predictor.Predict(ctx, input)
 	if err != nil {
 		panic(err)
 	}
