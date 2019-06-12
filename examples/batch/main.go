@@ -37,6 +37,8 @@ var (
 	shape       = []int{1, 3, 224, 224}
 	mean        = []float32{0.485, 0.456, 0.406}
 	scale       = []float32{0.229, 0.224, 0.225}
+	imgDir, _   = filepath.Abs("../_fixtures")
+	imgPath     = filepath.Join(imgDir, "cheeseburger.jpg")
 	graph_url   = "http://s3.amazonaws.com/store.carml.org/models/mxnet/gluoncv/alexnet/model-symbol.json"
 	weights_url = "http://s3.amazonaws.com/store.carml.org/models/mxnet/gluoncv/alexnet/model-0000.params"
 	synset_url  = "http://s3.amazonaws.com/store.carml.org/synsets/imagenet/synset.txt"
@@ -111,8 +113,6 @@ func main() {
 	width := 224
 	channels := 3
 
-	imgDir, _ := filepath.Abs("../_fixtures")
-	imgPath := filepath.Join(imgDir, "platypus.jpg")
 	r, err := os.Open(imgPath)
 	if err != nil {
 		panic(err)
@@ -261,7 +261,8 @@ func main() {
 
 	for ii := 0; ii < batchSize; ii++ {
 		rprobs := make([]*dlframework.Feature, featuresLen)
-		soutputs := softmax(output[ii*featuresLen : (ii+1)*featuresLen])
+		// soutputs := softmax(output[ii*featuresLen : (ii+1)*featuresLen])
+		soutputs := output[ii*featuresLen : (ii+1)*featuresLen]
 		for jj := 0; jj < featuresLen; jj++ {
 			rprobs[jj] = feature.New(
 				feature.ClassificationIndex(int32(jj)),
@@ -269,8 +270,9 @@ func main() {
 				feature.Probability(soutputs[jj]),
 			)
 		}
-		sort.Sort(dlframework.Features(rprobs))
-		features[ii] = rprobs
+		nprobs := dlframework.Features(rprobs).ProbabilitiesApplySoftmaxFloat32()
+		sort.Sort(nprobs)
+		features[ii] = nprobs
 	}
 
 	if true {
