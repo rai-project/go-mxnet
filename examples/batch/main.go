@@ -11,6 +11,7 @@ import (
 	"sort"
 
 	"github.com/Unknwon/com"
+	"github.com/chewxy/math32"
 	"github.com/k0kubun/pp"
 	"github.com/pkg/errors"
 	"github.com/rai-project/config"
@@ -29,9 +30,13 @@ import (
 	gotensor "gorgonia.org/tensor"
 )
 
+// mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)
 var (
 	batchSize   = 1
-	model       = "alexnet"
+	model       = "squeezenet1.0"
+	shape       = []int{1, 3, 224, 224}
+	mean        = []float32{0.485, 0.456, 0.406}
+	scale       = []float32{0.229, 0.224, 0.225}
 	graph_url   = "http://s3.amazonaws.com/store.carml.org/models/mxnet/gluoncv/alexnet/model-symbol.json"
 	weights_url = "http://s3.amazonaws.com/store.carml.org/models/mxnet/gluoncv/alexnet/model-0000.params"
 	synset_url  = "http://s3.amazonaws.com/store.carml.org/synsets/imagenet/synset.txt"
@@ -46,7 +51,7 @@ func cvtRGBImageToNCHW1DArray(src image.Image, mean []float32) ([]float32, error
 	in := src.(*types.RGBImage)
 	height := in.Bounds().Dy()
 	width := in.Bounds().Dx()
-	scale := []float32{0.229, 0.224, 0.225}
+	// scale := []float32{0.229, 0.224, 0.225}
 
 	out := make([]float32, 3*height*width)
 
@@ -107,7 +112,7 @@ func main() {
 	channels := 3
 
 	imgDir, _ := filepath.Abs("../_fixtures")
-	imgPath := filepath.Join(imgDir, "cheeseburger.jpg")
+	imgPath := filepath.Join(imgDir, "platypus.jpg")
 	r, err := os.Open(imgPath)
 	if err != nil {
 		panic(err)
@@ -128,14 +133,14 @@ func main() {
 	}
 
 	input := make([]gotensor.Tensor, batchSize)
-	imgFloats, err := cvtRGBImageToNCHW1DArray(resized, []float32{0.485, 0.456, 0.406} /* []float32{123, 117, 104} */)
+	imgFloats, err := cvtRGBImageToNCHW1DArray(resized, mean /* []float32{123, 117, 104} */)
 	if err != nil {
 		panic(err)
 	}
 
-	pp.Println(resized.(*types.RGBImage).Pix[:4])
+	// pp.Println(resized.(*types.RGBImage).Pix[:4])
 
-	pp.Println(imgFloats[:4])
+	// pp.Println(imgFloats[:4])
 
 	for ii := 0; ii < batchSize; ii++ {
 		input[ii] = gotensor.New(
@@ -145,7 +150,7 @@ func main() {
 		)
 	}
 
-	pp.Println(input[0].At(0, 0, 0))
+	// pp.Println(input[0].At(0, 0, 0))
 
 	device := options.CPU_DEVICE
 	if nvidiasmi.HasGPU {
@@ -159,7 +164,7 @@ func main() {
 
 	in := options.Node{
 		Key:   "data",
-		Shape: []int{1, 3, 224, 224},
+		Shape: shape,
 	}
 
 	predictor, err := mxnet.New(
@@ -256,11 +261,12 @@ func main() {
 
 	for ii := 0; ii < batchSize; ii++ {
 		rprobs := make([]*dlframework.Feature, featuresLen)
+		soutputs := softmax(output[ii*featuresLen : (ii+1)*featuresLen])
 		for jj := 0; jj < featuresLen; jj++ {
 			rprobs[jj] = feature.New(
 				feature.ClassificationIndex(int32(jj)),
 				feature.ClassificationLabel(labels[jj]),
-				feature.Probability(output[ii*featuresLen+jj]),
+				feature.Probability(soutputs[jj]),
 			)
 		}
 		sort.Sort(dlframework.Features(rprobs))
@@ -277,6 +283,21 @@ func main() {
 	} else {
 		_ = features
 	}
+}
+
+// SoftMax performs softmax on the input. Specifically this is used:
+//		e^(a[i]) / sum((e^(a[i])))
+func softmax(ts []float32) []float32 {
+	res := make([]float32, len(ts))
+	accum := float32(0.0)
+	for ii, t := range ts {
+		res[ii] = math32.Exp(t)
+		accum += res[ii]
+	}
+	for ii, r := range res {
+		res[ii] = r / accum
+	}
+	return res
 }
 
 func init() {

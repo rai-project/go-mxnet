@@ -11,7 +11,6 @@ import (
 	"unsafe"
 
 	"gorgonia.org/tensor"
-
 	"github.com/k0kubun/pp"
 	"github.com/pkg/errors"
 	"github.com/rai-project/dlframework/framework/options"
