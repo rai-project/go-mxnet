@@ -30,6 +30,7 @@ import (
 	gotensor "gorgonia.org/tensor"
 )
 
+// https://github.com/dmlc/gluon-cv/blob/master/gluoncv/data/transforms/presets/imagenet.py
 // mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)
 var (
 	batchSize   = 1
@@ -45,7 +46,7 @@ var (
 )
 
 // convert go Image to 1-dim array
-func cvtRGBImageToNCHW1DArray(src image.Image, mean []float32) ([]float32, error) {
+func cvtRGBImageToNCHW1DArray(src image.Image, mean []float32, scale []float32) ([]float32, error) {
 	if src == nil {
 		return nil, fmt.Errorf("src image nil")
 	}
@@ -53,10 +54,8 @@ func cvtRGBImageToNCHW1DArray(src image.Image, mean []float32) ([]float32, error
 	in := src.(*types.RGBImage)
 	height := in.Bounds().Dy()
 	width := in.Bounds().Dx()
-	// scale := []float32{0.229, 0.224, 0.225}
 
 	out := make([]float32, 3*height*width)
-
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
 			offset := y*in.Stride + x*3
@@ -65,12 +64,9 @@ func cvtRGBImageToNCHW1DArray(src image.Image, mean []float32) ([]float32, error
 			out[y*width+x] = (float32(r)/255 - mean[0]) / scale[0]
 			out[width*height+y*width+x] = (float32(g)/255 - mean[1]) / scale[1]
 			out[2*width*height+y*width+x] = (float32(b)/255 - mean[2]) / scale[2]
-
-			// out[offset+0] = (float32(r)/255 - mean[0]) / scale[0]
-			// out[offset+1] = (float32(g)/255 - mean[1]) / scale[1]
-			// out[offset+2] = (float32(b)/255 - mean[2]) / scale[2]
 		}
 	}
+
 	return out, nil
 }
 
@@ -109,9 +105,9 @@ func main() {
 		panic(err)
 	}
 
-	height := 224
-	width := 224
-	channels := 3
+	height := shape[2]
+	width := shape[3]
+	channels := shape[1]
 
 	r, err := os.Open(imgPath)
 	if err != nil {
@@ -133,14 +129,10 @@ func main() {
 	}
 
 	input := make([]gotensor.Tensor, batchSize)
-	imgFloats, err := cvtRGBImageToNCHW1DArray(resized, mean /* []float32{123, 117, 104} */)
+	imgFloats, err := cvtRGBImageToNCHW1DArray(resized, mean, scale)
 	if err != nil {
 		panic(err)
 	}
-
-	// pp.Println(resized.(*types.RGBImage).Pix[:4])
-
-	// pp.Println(imgFloats[:4])
 
 	for ii := 0; ii < batchSize; ii++ {
 		input[ii] = gotensor.New(
@@ -149,8 +141,6 @@ func main() {
 			gotensor.WithBacking(imgFloats),
 		)
 	}
-
-	// pp.Println(input[0].At(0, 0, 0))
 
 	device := options.CPU_DEVICE
 	if nvidiasmi.HasGPU {
@@ -188,8 +178,6 @@ func main() {
 
 	err = predictor.Predict(ctx, input)
 	if err != nil {
-		pp.Println("fine")
-
 		panic(err)
 	}
 
@@ -214,7 +202,6 @@ func main() {
 
 	profile, err := mxnet.NewProfile(profileOptions, "")
 	if err != nil {
-
 		panic(err)
 	}
 	profile.Start()
@@ -261,7 +248,6 @@ func main() {
 
 	for ii := 0; ii < batchSize; ii++ {
 		rprobs := make([]*dlframework.Feature, featuresLen)
-		// soutputs := softmax(output[ii*featuresLen : (ii+1)*featuresLen])
 		soutputs := output[ii*featuresLen : (ii+1)*featuresLen]
 		for jj := 0; jj < featuresLen; jj++ {
 			rprobs[jj] = feature.New(
