@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"unsafe"
 
-	"gorgonia.org/tensor"
+	gotensor "gorgonia.org/tensor"
 	"github.com/pkg/errors"
 	"github.com/rai-project/dlframework/framework/options"
 	nvidiasmi "github.com/rai-project/nvidia-smi"
@@ -20,7 +20,7 @@ import (
 // predictor for inference
 type Predictor struct {
 	handle  C.PredictorHandle // C handle of predictor
-	inputs  []tensor.Tensor
+	inputs  []*gotensor.Dense
 	options *options.Options
 }
 
@@ -128,7 +128,7 @@ func New(ctx context.Context, opts ...options.Option) (*Predictor, error) {
 // go binding for MXPredSetInput
 // param key The name of input node to set
 // param data The float data to be set
-func (p *Predictor) SetInput(key string, input tensor.Tensor) error {
+func (p *Predictor) SetInput(key string, input *gotensor.Dense) error {
 	k := C.CString(key)
 	// free mem before return
 	defer C.free(unsafe.Pointer(k))
@@ -156,7 +156,7 @@ func (p *Predictor) Forward() error {
 	return nil
 }
 
-func (p *Predictor) Predict(ctx context.Context, data []tensor.Tensor) error {
+func (p *Predictor) Predict(ctx context.Context, data []*gotensor.Dense) error {
 	if len(data) == 0 {
 		return errors.New("intput data nil or empty")
 	}
@@ -211,10 +211,10 @@ func (p *Predictor) GetOutputShape(index int) ([]int, error) {
 	return res, nil
 }
 
-func (p *Predictor) ReadPredictionOutputAtIndex(ctx context.Context, index int) (tensor.Tensor, error) {
+func (p *Predictor) ReadPredictionOutputAtIndex(ctx context.Context, index int) (gotensor.Tensor, error) {
 	node := p.options.OutputNodes()[index]
 
-	if node.Dtype != tensor.Float32 {
+	if node.Dtype != gotensor.Float32 {
 		panic("only supports float32 for now")
   }
   
@@ -235,17 +235,17 @@ func (p *Predictor) ReadPredictionOutputAtIndex(ctx context.Context, index int) 
 		return nil, GetLastError()
   }
   
-	return tensor.NewDense(node.Dtype, shape, tensor.WithBacking(output)), nil
+	return gotensor.NewDense(node.Dtype, shape, gotensor.WithBacking(output)), nil
 }
 
 // get the output of the prediction
 // index is the index of the output node, set to 0 assuming there is only one output
-func (p *Predictor) ReadPredictionOutputs(ctx context.Context) ([]tensor.Tensor, error) {
+func (p *Predictor) ReadPredictionOutputs(ctx context.Context) ([]gotensor.Tensor, error) {
 	span, _ := tracer.StartSpanFromContext(ctx, tracer.MODEL_TRACE, "c_read_prediction_output")
 	defer span.Finish()
 
 	outputNodes := p.options.OutputNodes()
-	res := make([]tensor.Tensor, len(outputNodes))
+	res := make([]gotensor.Tensor, len(outputNodes))
 
 	for ii := 0; ii < len(outputNodes); ii++ {
 		tensor, err := p.ReadPredictionOutputAtIndex(ctx, ii)

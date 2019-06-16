@@ -26,7 +26,6 @@ import (
 	nvidiasmi "github.com/rai-project/nvidia-smi"
 	"github.com/rai-project/tracer"
 	_ "github.com/rai-project/tracer/all"
-	"gorgonia.org/tensor"
 	gotensor "gorgonia.org/tensor"
 )
 
@@ -39,7 +38,7 @@ var (
 	mean        = []float32{0.485, 0.456, 0.406}
 	scale       = []float32{0.229, 0.224, 0.225}
 	imgDir, _   = filepath.Abs("../_fixtures")
-	imgPath     = filepath.Join(imgDir, "cheeseburger.jpg")
+	imgPath     = filepath.Join(imgDir, "platypus.jpg")
 	graph_url   = "http://s3.amazonaws.com/store.carml.org/models/mxnet/gluoncv/squeezenet1.0/model-symbol.json"
 	weights_url = "http://s3.amazonaws.com/store.carml.org/models/mxnet/gluoncv/squeezenet1.0/model-0000.params"
 	synset_url  = "http://s3.amazonaws.com/store.carml.org/synsets/imagenet/synset.txt"
@@ -128,7 +127,7 @@ func main() {
 		panic(err)
 	}
 
-	input := make([]gotensor.Tensor, batchSize)
+	input := make([]*gotensor.Dense, batchSize)
 	imgFloats, err := cvtRGBImageToNCHW1DArray(resized, mean, scale)
 	if err != nil {
 		panic(err)
@@ -136,7 +135,7 @@ func main() {
 
 	for ii := 0; ii < batchSize; ii++ {
 		input[ii] = gotensor.New(
-			gotensor.Of(tensor.Float32),
+			gotensor.Of(gotensor.Float32),
 			gotensor.WithShape(height, width, channels),
 			gotensor.WithBacking(imgFloats),
 		)
@@ -167,7 +166,7 @@ func main() {
 		options.InputNodes([]options.Node{in}),
 		options.OutputNodes([]options.Node{
 			options.Node{
-				Dtype: tensor.Float32,
+				Dtype: gotensor.Float32,
 			},
 		}),
 	)

@@ -27,7 +27,8 @@ import (
 	"github.com/rai-project/downloadmanager"
 	"github.com/rai-project/go-mxnet/mxnet"
 	nvidiasmi "github.com/rai-project/nvidia-smi"
-	_ "github.com/rai-project/tracer/all"
+  _ "github.com/rai-project/tracer/all"
+	gotensor "gorgonia.org/tensor"
 )
 
 // https://github.com/dmlc/gluon-cv/blob/master/gluoncv/data/transforms/presets/imagenet.py
@@ -39,7 +40,7 @@ var (
 	mean        = []float32{0.485, 0.456, 0.406}
   scale       = []float32{0.229, 0.224, 0.225}
 	imgDir, _   = filepath.Abs("../_fixtures")
-	imgPath     = filepath.Join(imgDir, "cheeseburger.jpg")
+	imgPath     = filepath.Join(imgDir, "platypus.jpg")
 	graph_url   = "http://s3.amazonaws.com/store.carml.org/models/mxnet/gluoncv/squeezenet1.0/model-symbol.json"
 	weights_url = "http://s3.amazonaws.com/store.carml.org/models/mxnet/gluoncv/squeezenet1.0/model-0000.params"
 	synset_url  = "http://s3.amazonaws.com/store.carml.org/synsets/imagenet/synset.txt"
@@ -127,7 +128,7 @@ func main() {
 		panic(err)
 	}
 
-	input := make([]gotensor.Tensor, batchSize)
+	input := make([]*gotensor.Dense, batchSize)
 	imgFloats, err := cvtRGBImageToNCHW1DArray(resized, mean, scale)
 	if err != nil {
 		panic(err)
