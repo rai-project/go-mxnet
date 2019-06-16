@@ -30,42 +30,51 @@ import (
 	_ "github.com/rai-project/tracer/all"
 )
 
+// https://github.com/dmlc/gluon-cv/blob/master/gluoncv/data/transforms/presets/imagenet.py
+// mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)
 var (
 	batchSize   = 1
-	model       = "squeezenet_v1.0"
-	graph_url   = "http://s3.amazonaws.com/store.carml.org/models/mxnet/squeezenet_v1.0/squeezenet_v1.0-symbol.json" //"http://s3.amazonaws.com/store.carml.org/models/mxnet/bvlc_alexnet/bvlc_alexnet-symbol.json"
-	weights_url = "http://s3.amazonaws.com/store.carml.org/models/mxnet/squeezenet_v1.0/squeezenet_v1.0-0000.params" // "http://s3.amazonaws.com/store.carml.org/models/mxnet/bvlc_alexnet/bvlc_alexnet-0000.params"
+	model       = "squeezenet1.0"
+	shape       = []int{1, 3, 224, 224}
+	mean        = []float32{0.485, 0.456, 0.406}
+  scale       = []float32{0.229, 0.224, 0.225}
+	imgDir, _   = filepath.Abs("../_fixtures")
+	imgPath     = filepath.Join(imgDir, "cheeseburger.jpg")
+	graph_url   = "http://s3.amazonaws.com/store.carml.org/models/mxnet/gluoncv/squeezenet1.0/model-symbol.json"
+	weights_url = "http://s3.amazonaws.com/store.carml.org/models/mxnet/gluoncv/squeezenet1.0/model-0000.params"
 	synset_url  = "http://s3.amazonaws.com/store.carml.org/synsets/imagenet/synset.txt"
 )
 
 // convert go Image to 1-dim array
-func cvtImageToNCHW1DArray(src image.Image, mean []float32) ([]float32, error) {
+func cvtRGBImageToNCHW1DArray(src image.Image, mean []float32, scale []float32) ([]float32, error) {
 	if src == nil {
 		return nil, fmt.Errorf("src image nil")
 	}
 
-	b := src.Bounds()
-	h := b.Max.Y - b.Min.Y // image height
-	w := b.Max.X - b.Min.X // image width
+	in := src.(*types.RGBImage)
+	height := in.Bounds().Dy()
+	width := in.Bounds().Dx()
 
-	res := make([]float32, 3*h*w)
-	for y := 0; y < h; y++ {
-		for x := 0; x < w; x++ {
-			r, g, b, _ := src.At(x+b.Min.X, y+b.Min.Y).RGBA()
-			res[y*w+x] = float32(r>>8) - mean[0]
-			res[w*h+y*w+x] = float32(g>>8) - mean[1]
-			res[2*w*h+y*w+x] = float32(b>>8) - mean[2]
+	out := make([]float32, 3*height*width)
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			offset := y*in.Stride + x*3
+			rgb := in.Pix[offset : offset+3]
+			r, g, b := rgb[0], rgb[1], rgb[2]
+			out[y*width+x] = (float32(r)/255 - mean[0]) / scale[0]
+			out[width*height+y*width+x] = (float32(g)/255 - mean[1]) / scale[1]
+			out[2*width*height+y*width+x] = (float32(b)/255 - mean[2]) / scale[2]
 		}
 	}
 
-	return res, nil
+	return out, nil
 }
 
 func main() {
 	dir, _ := filepath.Abs("../tmp")
 	dir = filepath.Join(dir, model)
-	graph := filepath.Join(dir, "squeezenet_v1.0-symbol.json")
-	weights := filepath.Join(dir, "squeezenet_v1.0-0000.params")
+	graph := filepath.Join(dir, "model-symbol.json")
+	weights := filepath.Join(dir, "model-0000.params")
 	synset := filepath.Join(dir, "synset.txt")
 
 	if !com.IsFile(graph) {
@@ -94,25 +103,43 @@ func main() {
 		panic(err)
 	}
 
-	imgDir, _ := filepath.Abs("../_fixtures")
-	imagePath := filepath.Join(imgDir, "cheeseburger.jpg")
 
-	img, err := imgio.Open(imagePath)
+	height := shape[2]
+	width := shape[3]
+	channels := shape[1]
+
+	r, err := os.Open(imgPath)
 	if err != nil {
 		panic(err)
 	}
 
-	var input []float32
-	for ii := 0; ii < batchSize; ii++ {
-		resized := transform.Resize(img, 224, 224, transform.Linear)
-		res, err := cvtImageTo1DArray(resized, []float32{0, 0, 0}) // []float32{123, 117, 104})
-		if err != nil {
-			panic(err)
-		}
-		input = append(input, res...)
+	var imgOpts []raiimage.Option
+	imgOpts = append(imgOpts, raiimage.Mode(types.RGBMode))
+	img, err := raiimage.Read(r, imgOpts...)
+	if err != nil {
+		panic(err)
 	}
 
-	opts := options.New()
+	imgOpts = append(imgOpts, raiimage.Resized(height, width))
+	imgOpts = append(imgOpts, raiimage.ResizeAlgorithm(types.ResizeAlgorithmLinear))
+	resized, err := raiimage.Resize(img, imgOpts...)
+	if err != nil {
+		panic(err)
+	}
+
+	input := make([]gotensor.Tensor, batchSize)
+	imgFloats, err := cvtRGBImageToNCHW1DArray(resized, mean, scale)
+	if err != nil {
+		panic(err)
+	}
+
+	for ii := 0; ii < batchSize; ii++ {
+		input[ii] = gotensor.New(
+			gotensor.Of(tensor.Float32),
+			gotensor.WithShape(height, width, channels),
+			gotensor.WithBacking(imgFloats),
+		)
+	}
 
 	device := options.CPU_DEVICE
 	if nvidiasmi.HasGPU {
@@ -124,7 +151,7 @@ func main() {
 
 	in := options.Node{
 		Key:   "data",
-		Shape: []int{1, 3, 224, 224},
+		Shape: shape,
 	}
 	predictor, err := mxnet.New(
 		ctx,
@@ -139,7 +166,7 @@ func main() {
 		}),
 	)
 	if err != nil {
-		panic(fmt.Sprintf("+v", err))
+		panic(fmt.Sprintf("%v", err))
 	}
 	defer predictor.Close()
 
@@ -166,6 +193,8 @@ func main() {
 		panic(errors.Errorf("invalid output length. got outputs of length %v", len(outputs)))
 	}
 
+  output := outputs[0].Data().([]float32)
+
 	var labels []string
 	f, err := os.Open(synset)
 	if err != nil {
@@ -182,16 +211,18 @@ func main() {
 	featuresLen := len(output) / batchSize
 
 	for ii := 0; ii < batchSize; ii++ {
-		rprobs := make([]*dlframework.Feature, featuresLen)
+    rprobs := make([]*dlframework.Feature, featuresLen)
+		soutputs := output[ii*featuresLen : (ii+1)*featuresLen]
 		for jj := 0; jj < featuresLen; jj++ {
 			rprobs[jj] = feature.New(
 				feature.ClassificationIndex(int32(jj)),
 				feature.ClassificationLabel(labels[jj]),
 				feature.Probability(output[ii*featuresLen+jj]),
 			)
-		}
-		sort.Sort(dlframework.Features(rprobs))
-		features[ii] = rprobs
+    }
+    nprobs := dlframework.Features(rprobs).ProbabilitiesApplySoftmaxFloat32()
+		sort.Sort(nprobs)
+		features[ii] = nprobs
 	}
 
 	if true {

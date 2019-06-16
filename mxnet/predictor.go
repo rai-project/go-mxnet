@@ -11,7 +11,6 @@ import (
 	"unsafe"
 
 	"gorgonia.org/tensor"
-	"github.com/k0kubun/pp"
 	"github.com/pkg/errors"
 	"github.com/rai-project/dlframework/framework/options"
 	nvidiasmi "github.com/rai-project/nvidia-smi"
@@ -169,7 +168,6 @@ func (p *Predictor) Predict(ctx context.Context, data []tensor.Tensor) error {
 			return errors.New("expecting a valid (non-empty) input layer name")
 		}
 
-		pp.Println(inputNode)
 		err := p.SetInput(inputNode.Key, data[ii])
 		if err != nil {
 			return err
@@ -220,8 +218,6 @@ func (p *Predictor) ReadPredictionOutputAtIndex(ctx context.Context, index int) 
 		panic("only supports float32 for now")
   }
   
-  pp.Println(node)
-
 	shape, err := p.GetOutputShape(index)
 	if err != nil {
 		return nil, err
@@ -237,11 +233,8 @@ func (p *Predictor) ReadPredictionOutputAtIndex(ctx context.Context, index int) 
 	)
 	if success != 0 {
 		return nil, GetLastError()
-	}
-
-	pp.Println(size)
-	pp.Println(output[:3])
-
+  }
+  
 	return tensor.NewDense(node.Dtype, shape, tensor.WithBacking(output)), nil
 }
 

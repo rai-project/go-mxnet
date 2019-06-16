@@ -40,8 +40,8 @@ var (
 	scale       = []float32{0.229, 0.224, 0.225}
 	imgDir, _   = filepath.Abs("../_fixtures")
 	imgPath     = filepath.Join(imgDir, "cheeseburger.jpg")
-	graph_url   = "http://s3.amazonaws.com/store.carml.org/models/mxnet/gluoncv/alexnet/model-symbol.json"
-	weights_url = "http://s3.amazonaws.com/store.carml.org/models/mxnet/gluoncv/alexnet/model-0000.params"
+	graph_url   = "http://s3.amazonaws.com/store.carml.org/models/mxnet/gluoncv/squeezenet1.0/model-symbol.json"
+	weights_url = "http://s3.amazonaws.com/store.carml.org/models/mxnet/gluoncv/squeezenet1.0/model-0000.params"
 	synset_url  = "http://s3.amazonaws.com/store.carml.org/synsets/imagenet/synset.txt"
 )
 
