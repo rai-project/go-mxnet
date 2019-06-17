@@ -20,7 +20,6 @@ import (
 // predictor for inference
 type Predictor struct {
 	handle  C.PredictorHandle // C handle of predictor
-	inputs  []*gotensor.Dense
 	options *options.Options
 }
 
@@ -124,6 +123,10 @@ func New(ctx context.Context, opts ...options.Option) (*Predictor, error) {
 	return pred, nil
 }
 
+func (p *Predictor) GetOptions() *options.Options {
+  return p.options
+}
+
 // set the input data of predictor
 // go binding for MXPredSetInput
 // param key The name of input node to set
@@ -160,8 +163,6 @@ func (p *Predictor) Predict(ctx context.Context, data []*gotensor.Dense) error {
 	if len(data) == 0 {
 		return errors.New("intput data nil or empty")
 	}
-
-	p.inputs = data
 
 	for ii, inputNode := range p.options.InputNodes() {
 		if inputNode.Key == "" {
