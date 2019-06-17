@@ -26,21 +26,21 @@ The MXNet C library is expected to be under `/opt/mxnet`.
 
 To install MXNet on your system, you can follow the [MXNet documentation](https://mxnet.incubator.apache.org/versions/master/install/), or refer to our [scripts](scripts) or the `LIBRARY INSTALLATION` section in the [dockefiles](dockerfiles). OpenBLAS is used in our default build.
 
-If you get an error about not being able to write to `/opt` then perform the following
-
-```
-sudo mkdir -p /opt/mxnet
-sudo chown -R `whoami` /opt/mxnet
-```
-
 - The default blas is OpenBLAS.
-  The default OpenBLAS path for mac os is `/usr/local/opt/openblas` if installed throught homebrew (openblas is keg-only, which means it was not symlinked into /usr/local, because macOS provides BLAS and LAPACK in the Accelerate framework).
+  The default OpenBLAS path for macOS is `/usr/local/opt/openblas` if installed throught homebrew (openblas is keg-only, which means it was not symlinked into /usr/local, because macOS provides BLAS and LAPACK in the Accelerate framework).
 
 - The default mxnet installation path is `/opt/mxnet` for linux, darwin and ppc64le without powerai; `/opt/DL/mxnet` for ppc64le with powerai.
 
 - The default CUDA path is `/usr/local/cuda`
 
 See [lib.go](lib.go) for details.
+
+If you get an error about not being able to write to `/opt` then perform the following
+
+```
+sudo mkdir -p /opt/mxnet
+sudo chown -R `whoami` /opt/mxnet
+```
 
 If you are using MXNet docker images or other libary paths, change CGO_CFLAGS, CGO_CXXFLAGS and CGO_LDFLAGS enviroment variables. Refer to [Using cgo with the go command](https://golang.org/cmd/cgo/#hdr-Using_cgo_with_the_go_command).
 
@@ -51,8 +51,6 @@ For example,
     export CGO_CXXFLAGS="${CGO_CXXFLAGS} -I/tmp/mxnet/include"
     export CGO_LDFLAGS="${CGO_LDFLAGS} -L/tmp/mxnet/lib"
 ```
-
-After installing MXNet, place `export DYLD_LIBRARY_PATH=/opt/mxnet/lib:$DYLD_LIBRARY_PATH` on mac os or `export LD_LIBRARY_PATH=/opt/mxnet/lib:$DYLD_LIBRARY_PATH` in your `~/.bashrc` or `~/.zshrc` file and then run either `source ~/.bashrc` or `source ~/.zshrc`.
 
 ### Go Packages
 
@@ -70,6 +68,23 @@ dep ensure -v
 ```
 
 This installs the dependency in `vendor/`.
+
+### Configure Environmental Variables
+
+Configure the linker environmental variables since the MXNet C library is under a non-system directory. Place the following in either your `~/.bashrc` or `~/.zshrc` file
+
+Linux
+```
+export LIBRARY_PATH=$LIBRARY_PATH:/opt/mxnet/lib
+export LD_LIBRARY_PATH=/opt/mxnet/lib:$DYLD_LIBRARY_PATH
+
+```
+
+macOS
+```
+export LIBRARY_PATH=$LIBRARY_PATH:/opt/mxnet/lib
+export DYLD_LIBRARY_PATH=/opt/mxnet/lib:$DYLD_LIBRARY_PATH
+```
 
 ## Check the Build
 
