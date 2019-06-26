@@ -91,7 +91,7 @@ export DYLD_LIBRARY_PATH=/opt/mxnet/lib:$DYLD_LIBRARY_PATH
 Run `go build` in to check the dependences installation and library paths set-up.
 On linux, the default is to use GPU, if you don't have a GPU, do `go build -tags nogpu` instead of `go build`.
 
-Note: The CGO interface passes go pointers to the C API. This is an error by the CGO runtime. Disable the error by placing
+**_Note_** : The CGO interface passes go pointers to the C API. This is an error by the CGO runtime. Disable the error by placing
 
 ```
 export GODEBUG=cgocheck=0
