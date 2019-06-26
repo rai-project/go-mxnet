@@ -156,7 +156,7 @@ func (p *Predictor) Forward() error {
 	if success != 0 {
 		return GetLastError()
 	}
-	return nil
+	return WaitAll()
 }
 
 func (p *Predictor) Predict(ctx context.Context, data []*gotensor.Dense) error {

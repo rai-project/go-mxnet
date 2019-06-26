@@ -1,6 +1,7 @@
 package mxnet
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"os"
@@ -9,8 +10,6 @@ import (
 	"strings"
 	"time"
 	"unsafe"
-
-	"context"
 
 	"github.com/Unknwon/com"
 	opentracing "github.com/opentracing/opentracing-go"
@@ -328,9 +327,9 @@ func (p *Profile) process() {
 	for ii, event := range events {
 		events[ii].Name = strings.Trim(strings.Trim(event.Name, "["), "]")
 		if adjustTime {
-		events[ii].Time = start.Add(time.Duration(event.Timestamp-minTime) * timeUnit)
+			events[ii].Time = start.Add(time.Duration(event.Timestamp-minTime) * timeUnit)
 		} else {
-		events[ii].Time = time.Unix(0, event.Timestamp * int64(timeUnit))
+			events[ii].Time = time.Unix(0, event.Timestamp*int64(timeUnit))
 		}
 		if events[ii].Args == nil {
 			events[ii].Args = make(map[string]interface{})

@@ -1,7 +1,7 @@
 #!/bin/sh
 
-FRAMEWORK_VERSION=1.3.0
-MXNET_SRC_DIR=$HOME/code/mxnet
+FRAMEWORK_VERSION=1.4.1
+MXNET_SRC_DIR=$HOME/mxnet
 MXNET_DIST_DIR=/opt/mxnet
 
 if [ ! -d "$MXNET_SRC_DIR" ]; then
@@ -31,6 +31,7 @@ echo "CUDA_ARCH+=-gencode=arch=compute_53,code=\"sm_53\" " >> config.mk
 echo "CUDA_ARCH+=-gencode=arch=compute_60,code=\"sm_60\" " >> config.mk
 echo "CUDA_ARCH+=-gencode=arch=compute_61,code=\"sm_61\" " >> config.mk
 echo "CUDA_ARCH+=-gencode=arch=compute_70,code=\"sm_70\" " >> config.mk
+echo "CUDA_ARCH+=-gencode=arch=compute_75,code=\"sm_75\" " >> config.mk
 echo "ADD_CFLAGS= -ftrack-macro-expansion=0" >>config.mk
 
 make -j"$(nproc)" PREFIX=$MXNET_DIST_DIR

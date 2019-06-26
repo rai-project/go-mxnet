@@ -21,6 +21,7 @@ func disableFrameworkAutoTuning() {
 }
 
 func init() {
+	disableFrameworkAutoTuning()
 	config.AfterInit(func() {
 		log = logger.New().WithField("pkg", "go-mxnet")
 	})
