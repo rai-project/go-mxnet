@@ -33,10 +33,6 @@
   version = "0.10.0"
 
 [[constraint]]
-  name = "github.com/k0kubun/pp"
-  version = "2.3.0"
-
-[[constraint]]
   name = "github.com/opentracing/opentracing-go"
   version = "1.0.2"
 
@@ -76,14 +72,22 @@
   name = "github.com/sirupsen/logrus"
   version = "1.4.1"
 
+[[constraint]]
+  branch = "master"
+  name = "github.com/rai-project/go-mxnet"
+
+[[override]]
+  name ="github.com/k0kubun/pp"
+  version = "3.0.1"
+
 [[override]]
   branch = "master"
   name = "github.com/apache/thrift"
 
-[prune]
-  go-tests = true
-  unused-packages = true
-
 [[constraint]]
   branch = "master"
   name = "gonum.org/v1/gonum"
+
+[prune]
+  go-tests = true
+
