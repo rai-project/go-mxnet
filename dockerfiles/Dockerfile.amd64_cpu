@@ -55,11 +55,15 @@ ENV PKG github.com/rai-project/go-mxnet
 WORKDIR $GOPATH/src/$PKG
 
 RUN git clone --depth=1 https://${PKG}.git . && \
-  sed -i "/prefix=/c prefix=\/opt/mxnet" $GOPATH/src/github.com/rai-project/go-mxnet/travis/mxnet.pc && \
-  cp $GOPATH/src/github.com/rai-project/go-mxnet/travis/mxnet.pc /usr/lib/pkgconfig && \
-  pkg-config --libs mxnet && \
-  cd $GOPATH/src/$PKG && \
-  dep ensure -vendor-only -v && \
-  go build -tags=nogpu -a -installsuffix cgo -ldflags "-s -w -X ${PKG}/Version=${VERSION} -X ${PKG}/GitCommit=${VCS_REF} -X ${PKG}/BuildDate=${BUILD_DATE}"&& \
+  sed -i "/prefix=/c prefix=\/opt/mxnet" $GOPATH/src/$PKG/travis/mxnet.pc && \
+  cp $GOPATH/src/$PKG/travis/mxnet.pc /usr/lib/pkgconfig && \
+  pkg-config --libs mxnet
+
+RUN dep ensure -v -no-vendor -update \
+    github.com/rai-project/go-mxnet \
+    github.com/rai-project/dlframework && \
+    dep ensure -v -vendor-only
+
+RUN go build -tags=nogpu -a -installsuffix cgo -ldflags "-s -w -X ${PKG}/Version=${VERSION} -X ${PKG}/GitCommit=${VCS_REF} -X ${PKG}/BuildDate=${BUILD_DATE}"&& \
   go install -tags=nogpu && \
   rm -fr vendor
