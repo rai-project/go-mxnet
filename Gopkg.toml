@@ -72,10 +72,6 @@
   name = "github.com/sirupsen/logrus"
   version = "1.4.1"
 
-[[constraint]]
-  branch = "master"
-  name = "github.com/rai-project/go-mxnet"
-
 [[override]]
   name ="github.com/k0kubun/pp"
   version = "3.0.1"
