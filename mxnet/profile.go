@@ -295,6 +295,17 @@ func (p *Profile) Read() error {
 	return nil
 }
 
+func parseOpLabel(name string) (opName, layerName, shape string) {
+	re := regexp.MustCompile(`(?m)^(.*){name=([^;]*);in0=([^;]+);.*`)
+	allMatches := re.FindAllStringSubmatch(name, -1)
+	if len(allMatches) != 1 {
+		return
+	}
+	matches := allMatches[0]
+	opName, layerName, shape = matches[1], matches[2], matches[3]
+	return
+}
+
 func (p *Profile) process() {
 	timeUnit := time.Microsecond
 
@@ -338,7 +349,12 @@ func (p *Profile) process() {
 			continue
 		}
 		events[ii].Args["layer_sequence_index"] = layerSequenceIndex
-		layerSequenceIndex++
+    layerSequenceIndex++
+
+    opName, layerName, shape := parseOpLabel(event.Name)
+    events[ii].Args["layer_name"] = layerName
+    events[ii].Args["op_name"] = opName
+    events[ii].Args["shape"] = shape
 	}
 
 	p.Trace.TraceEvents = events
@@ -347,7 +363,7 @@ func (p *Profile) process() {
 func (p *Profile) Delete() error {
 	if !com.IsFile(p.filename) {
 		return nil
-	}
+  }
 	return os.Remove(p.filename)
 }
 
@@ -356,13 +372,6 @@ func (p *Profile) Publish(ctx context.Context, opts ...opentracing.StartSpanOpti
 		log.WithError(err).Errorf("failed to read profile at %s", p.filename)
 		return err
 	}
-
-	if false {
-		if pth, ok := ctx.Value("graph_path").(string); ok {
-			p.addNodeMetadata(pth)
-		}
-	}
-
 	return p.Trace.Publish(ctx, tracer.FRAMEWORK_TRACE, opts...)
 }
 

@@ -8,19 +8,23 @@ import "C"
 import (
 	"context"
 	"runtime"
-	"unsafe"
+  "unsafe"
+  "path/filepath"
 
+  opentracing "github.com/opentracing/opentracing-go"
 	gotensor "gorgonia.org/tensor"
 	"github.com/pkg/errors"
 	"github.com/rai-project/dlframework/framework/options"
 	nvidiasmi "github.com/rai-project/nvidia-smi"
-	"github.com/rai-project/tracer"
+  "github.com/rai-project/tracer"
+  cupti "github.com/rai-project/go-cupti"
 )
 
 // predictor for inference
 type Predictor struct {
 	handle  C.PredictorHandle // C handle of predictor
-	options *options.Options
+  options *options.Options
+  cu        *cupti.CUPTI
 }
 
 func prod(arry []int) int {
@@ -160,7 +164,7 @@ func (p *Predictor) Forward() error {
 }
 
 func (p *Predictor) Predict(ctx context.Context, data []*gotensor.Dense) error {
-	if len(data) == 0 {
+  if len(data) == 0 {
 		return errors.New("intput data nil or empty")
 	}
 
@@ -175,16 +179,69 @@ func (p *Predictor) Predict(ctx context.Context, data []*gotensor.Dense) error {
 		}
 	}
 
-	span, _ := tracer.StartSpanFromContext(ctx, tracer.MODEL_TRACE, "c_predict")
-	defer span.Finish()
-
-	err := p.Forward()
+  err := p.cuptiStart(ctx)
 	if err != nil {
 		return err
 	}
 
+  span, _ := tracer.StartSpanFromContext(ctx, tracer.MODEL_TRACE, "c_predict", 		
+  opentracing.Tags{
+    "evaluation_trace_level": p.GetOptions().TraceLevel(),
+  })
+  defer span.Finish()
+
+  if p.GetOptions().TraceLevel() >= tracer.FRAMEWORK_TRACE {
+		// define profiling options
+		poptions := map[string]ProfileMode{
+			"profile_all":        ProfileAllDisable,
+			"profile_symbolic":   ProfileSymbolicOperatorsEnable,
+			"profile_imperative": ProfileImperativeOperatorsDisable,
+			"profile_memory":     ProfileMemoryEnable,
+			"profile_api":        ProfileApiDisable,
+			"continuous_dump":    ProfileContinuousDumpDisable,
+		}
+		if profile, err := NewProfile(poptions, filepath.Join("/tmp", "profile")); err == nil {
+			profile.Start()
+			defer func() {
+				profile.Stop()
+				profile.Publish(ctx)
+				profile.Delete()
+			}()
+		}
+	}
+
+	err = p.Forward()
+	if err != nil {
+		return err
+	}
+
+	p.cuptiClose()
+
 	return nil
 }
+
+func (p *Predictor) cuptiStart(ctx context.Context) error {
+  opts := p.GetOptions()
+	if !opts.UsesGPU() || opts.TraceLevel() < tracer.SYSTEM_LIBRARY_TRACE {
+		return nil
+  }
+	cu, err := cupti.New(cupti.Context(ctx), cupti.SamplingPeriod(0))
+	if err != nil {
+		return err
+	}
+  p.cu = cu
+	return nil
+}
+
+func (p *Predictor) cuptiClose() {
+	if p.cu == nil {
+		return
+	}
+	p.cu.Wait()
+	p.cu.Close()
+	p.cu = nil
+}
+
 
 // get the shape of output node
 // go binding for MXPredGetOutputShape
