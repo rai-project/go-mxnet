@@ -10,7 +10,8 @@ import (
 	"runtime"
   "unsafe"
   "path/filepath"
-
+  "strings"
+  
   opentracing "github.com/opentracing/opentracing-go"
 	gotensor "gorgonia.org/tensor"
 	"github.com/pkg/errors"
@@ -179,12 +180,7 @@ func (p *Predictor) Predict(ctx context.Context, data []*gotensor.Dense) error {
 		}
 	}
 
-  err := p.cuptiStart(ctx)
-	if err != nil {
-		return err
-	}
-
-  span, _ := tracer.StartSpanFromContext(ctx, tracer.MODEL_TRACE, "c_predict", 		
+  span, ctx := tracer.StartSpanFromContext(ctx, tracer.MODEL_TRACE, "c_predict", 		
   opentracing.Tags{
     "evaluation_trace_level": p.GetOptions().TraceLevel(),
   })
@@ -195,7 +191,7 @@ func (p *Predictor) Predict(ctx context.Context, data []*gotensor.Dense) error {
 		poptions := map[string]ProfileMode{
 			"profile_all":        ProfileAllDisable,
 			"profile_symbolic":   ProfileSymbolicOperatorsEnable,
-			"profile_imperative": ProfileImperativeOperatorsDisable,
+			"profile_imperative": ProfileImperativeOperatorsEnable,
 			"profile_memory":     ProfileMemoryEnable,
 			"profile_api":        ProfileApiDisable,
 			"continuous_dump":    ProfileContinuousDumpDisable,
@@ -208,6 +204,11 @@ func (p *Predictor) Predict(ctx context.Context, data []*gotensor.Dense) error {
 				profile.Delete()
 			}()
 		}
+	}
+
+  err := p.cuptiStart(ctx)
+	if err != nil {
+		return err
 	}
 
 	err = p.Forward()
@@ -225,12 +226,21 @@ func (p *Predictor) cuptiStart(ctx context.Context) error {
 	if !opts.UsesGPU() || opts.TraceLevel() < tracer.SYSTEM_LIBRARY_TRACE {
 		return nil
   }
-	cu, err := cupti.New(cupti.Context(ctx), cupti.SamplingPeriod(0))
+
+  metrics := []string{}
+	if opts.GPUMetrics() != "" {
+		metrics = strings.Split(opts.GPUMetrics(), ",")
+	}
+
+	cu, err := cupti.New(cupti.Context(ctx),
+		cupti.SamplingPeriod(0),
+		cupti.Metrics(metrics),
+	)
 	if err != nil {
 		return err
 	}
-  p.cu = cu
-	return nil
+	p.cu = cu
+  return nil 
 }
 
 func (p *Predictor) cuptiClose() {

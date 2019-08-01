@@ -308,13 +308,12 @@ func parseOpLabel(name string) (opName, layerName, shape string) {
 
 func (p *Profile) process() {
 	timeUnit := time.Microsecond
-
 	start := p.startTime
 
 	minTime := int64(0)
-	events := []chrome.TraceEvent{}
+  events := []chrome.TraceEvent{}
 	for _, event := range p.Trace.TraceEvents {
-		eventType := strings.ToUpper(event.EventType)
+    eventType := event.EventType
 		if eventType != "B" && eventType != "E" {
 			continue
 		}
@@ -334,7 +333,8 @@ func (p *Profile) process() {
 		}
 	}
 
-	layerSequenceIndex := 0
+  layerSequenceIndex := 0
+  visited := map[string]bool{}
 	for ii, event := range events {
 		events[ii].Name = strings.Trim(strings.Trim(event.Name, "["), "]")
 		if adjustTime {
@@ -347,16 +347,24 @@ func (p *Profile) process() {
 		}
 		if event.Category != "operator" {
 			continue
-		}
-		events[ii].Args["layer_sequence_index"] = layerSequenceIndex
-    layerSequenceIndex++
+    }
 
     opName, layerName, shape := parseOpLabel(event.Name)
+
+		events[ii].Args["layer_sequence_index"] = layerSequenceIndex
     events[ii].Args["layer_name"] = layerName
     events[ii].Args["op_name"] = opName
     events[ii].Args["shape"] = shape
-	}
-
+    events[ii].Args["name"] = event.Name
+    events[ii].Name = layerName
+    
+    _, ok := visited[event.Name]
+    if !ok {
+      layerSequenceIndex += 1
+      visited[event.Name] = true
+    }
+  }
+  
 	p.Trace.TraceEvents = events
 }
 
@@ -392,9 +400,9 @@ func (p *Profile) addNodeMetadata(pth string) {
 			if nd.Op == "null" && ii != 0 {
 				continue
 			}
-			if event.Category != "operator" {
-				continue
-			}
+			// if event.Category != "operator" {
+			// 	continue
+			// }
 			ndOp := strings.ToLower(nd.Op)
 			ndName := strings.ToLower(nd.Name)
 			if ndOp != strings.ToLower(event.Name) {
