@@ -32,9 +32,9 @@ import (
 // https://github.com/dmlc/gluon-cv/blob/master/gluoncv/data/transforms/presets/imagenet.py
 // mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)
 var (
-	batchSize   = 1
+	batchSize   = 8
 	model       = "squeezenet1.0"
-	shape       = []int{1, 3, 224, 224}
+	shape       = []int{batchSize, 3, 224, 224}
 	mean        = []float32{0.485, 0.456, 0.406}
 	scale       = []float32{0.229, 0.224, 0.225}
 	imgDir, _   = filepath.Abs("../_fixtures")
@@ -127,20 +127,21 @@ func main() {
 		panic(err)
 	}
 
-	input := make([]*gotensor.Dense, batchSize)
 	imgFloats, err := cvtRGBImageToNCHW1DArray(resized, mean, scale)
 	if err != nil {
 		panic(err)
 	}
-
+	length := len(imgFloats)
+	dupImgFloats := make([]float32, length*batchSize)
 	for ii := 0; ii < batchSize; ii++ {
-		input[ii] = gotensor.New(
-			gotensor.Of(gotensor.Float32),
-			gotensor.WithShape(height, width, channels),
-			gotensor.WithBacking(imgFloats),
-		)
+		copy(dupImgFloats[ii*length:(ii+1)*length], imgFloats)
 	}
-
+	input := []*gotensor.Dense{gotensor.New(
+		gotensor.Of(gotensor.Float32),
+		gotensor.WithShape(batchSize, height, width, channels),
+		gotensor.WithBacking(dupImgFloats),
+	),
+	}
 	device := options.CPU_DEVICE
 	if nvidiasmi.HasGPU {
 		device = options.CUDA_DEVICE

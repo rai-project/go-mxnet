@@ -6,6 +6,7 @@ package mxnet
 */
 import "C"
 import (
+	"github.com/k0kubun/pp"
 	"context"
 	"runtime"
   "unsafe"
@@ -139,7 +140,7 @@ func (p *Predictor) GetOptions() *options.Options {
 func (p *Predictor) SetInput(key string, input *gotensor.Dense) error {
 	k := C.CString(key)
 	// free mem before return
-	defer C.free(unsafe.Pointer(k))
+  defer C.free(unsafe.Pointer(k))
 
 	success := C.MXPredSetInput(
 		p.handle,
