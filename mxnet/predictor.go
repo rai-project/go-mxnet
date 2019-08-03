@@ -6,7 +6,6 @@ package mxnet
 */
 import "C"
 import (
-	"github.com/k0kubun/pp"
 	"context"
 	"runtime"
   "unsafe"
