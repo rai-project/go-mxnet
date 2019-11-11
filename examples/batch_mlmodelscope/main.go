@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"image"
 	"io/ioutil"
+	"math"
 	"os"
 	"path/filepath"
 	"sort"
 
 	"github.com/Unknwon/com"
-	"github.com/chewxy/math32"
 	"github.com/k0kubun/pp"
 	"github.com/pkg/errors"
 	"github.com/rai-project/config"
@@ -279,7 +279,7 @@ func softmax(ts []float32) []float32 {
 	res := make([]float32, len(ts))
 	accum := float32(0.0)
 	for ii, t := range ts {
-		res[ii] = math32.Exp(t)
+		res[ii] = float32(math.Exp(float64(t)))
 		accum += res[ii]
 	}
 	for ii, r := range res {
